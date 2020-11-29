@@ -9,7 +9,7 @@ def run(context):
     try:
         app = adsk.core.Application.get()
         ui  = app.userInterface
-        ui.messageBox('In run function')
+        #ui.messageBox('In run function')
 
         # Get the CommandDefinitions collection.
         cmdDefs = ui.commandDefinitions
@@ -53,16 +53,16 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # Get the CommandInputs collection to create new command inputs.            
         inputs = cmd.commandInputs
 
-        # Create a check box to get if it should be an equilateral triangle or not.
+        # Create a check box to get if it should be a random number.
         isRandom = inputs.addBoolValueInput('isRandom', 'Random # of Rings', 
                                                True, '', True)
 
 
 
-        # Create the value input to get the height scale. 
+        # Create the value input to get the number of rings. 
         fixedNrOfRings = inputs.addIntegerSpinnerCommandInput('fixedNrOfRings', '# of Rings', 1, 100, 1,5)
-        # Create the slider to get the base length, setting the range of the slider to 
-        # be 1 to 10 of whatever the current document unit is. 
+        # Create the slider to get the thickness setting the range of the slider to 
+        # be 10 to 24 of whatever the current document unit is. 
         app = adsk.core.Application.get()
         des = adsk.fusion.Design.cast(app.activeProduct)
 
@@ -104,6 +104,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         else:
             amountOfDonuts = fixedAamountOfDonuts
 
+        #call the method to create the rings
         createDonuts(amountOfDonuts, donutThickness)
         
 
@@ -129,11 +130,14 @@ def stop(context):
 
 
 
-
+#This method contains the actual code to create the rings
+#arguments 
+#amountOfDonuts int how many rings to create
+#donutThickness radius of the rings
 def createDonuts(amountOfDonuts, donutThickness):
     app = adsk.core.Application.get()
     ui  = app.userInterface
-    ui.messageBox('in createDonuts')
+    #ui.messageBox('in createDonuts')
     try:
         #get the design  //selfmade
         design = adsk.fusion.Design.cast(app.activeProduct)
@@ -178,7 +182,7 @@ def createDonuts(amountOfDonuts, donutThickness):
         yellowAppear = design.appearances.itemByName(libAppear.name)
 
 
-        #loop 5 to 10 times
+        #loop requested amount of times
         #anzahlringe = random.randint(4, 9)
         i=0
         while i <= (amountOfDonuts-1):
