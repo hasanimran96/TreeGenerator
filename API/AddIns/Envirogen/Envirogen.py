@@ -9,15 +9,15 @@ def run(context):
     try:
         app = adsk.core.Application.get()
         ui  = app.userInterface
-        #ui.messageBox('In run function')
+        ui.messageBox('In run function')
 
         # Get the CommandDefinitions collection.
         cmdDefs = ui.commandDefinitions
         
         # Create a button command definition.
-        buttonSample = cmdDefs.addButtonDefinition('MyButtonDefIdPython', 
-                                                   'McDonut', 
-                                                   'Create fun Rings',
+        buttonSample = cmdDefs.addButtonDefinition('NewButtonDefIdPython', 
+                                                   'Tree', 
+                                                   'Sample button tooltip',
                                                    './resources/Button')
         
         # Connect to the command created event.
@@ -116,12 +116,12 @@ def stop(context):
         ui  = app.userInterface
         
         # Clean up the UI.
-        cmdDef = ui.commandDefinitions.itemById('MyButtonDefIdPython')
+        cmdDef = ui.commandDefinitions.itemById('NewButtonDefIdPython')
         if cmdDef:
             cmdDef.deleteMe()
             
         addinsPanel = ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
-        cntrl = addinsPanel.controls.itemById('MyButtonDefIdPython')
+        cntrl = addinsPanel.controls.itemById('NewButtonDefIdPython')
         if cntrl:
             cntrl.deleteMe()
     except:
@@ -173,6 +173,10 @@ def createDonuts(amountOfDonuts, donutThickness):
         # Get the RevolveFeatures collection.
         revolves = rootComp.features.revolveFeatures
 
+        #NEW
+        # Get the ExtrudeFeatures collection.
+        extrudes = rootComp.features.extrudeFeatures
+
         # Get a reference to an appearance in the library.
         lib = app.materialLibraries.itemByName('Fusion 360 Appearance Library')
         libAppear = lib.appearances.itemByName('Plastic - Matte (Yellow)')
@@ -199,14 +203,33 @@ def createDonuts(amountOfDonuts, donutThickness):
 
             # Create a revolve input object that defines the input for a revolve feature.
             # When creating the input object, required settings are provided as arguments.
-            revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            #NEW
+            extInput = extrudes.createInput(prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
             # Define a revolve by specifying fractions of 2 pi(full circle) as the revolve angle.
-            angle = adsk.core.ValueInput.createByReal(math.pi * 2 * ((i+1)/amountOfDonuts) )
-            revInput.setAngleExtent(False, angle)
+            #angle = adsk.core.ValueInput.createByReal(math.pi * 2 * ((i+1)/amountOfDonuts) )
+            #revInput.setAngleExtent(False, angle)
+            #NEW
+            dist = adsk.core.ValueInput.createByReal(5)
+            extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+        dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
+            extInput.isSolid = False
                     
             # Create the revolve by calling the add method on the RevolveFeatures collection and passing it the RevolveInput object.
-            rev = revolves.add(revInput)
+            #rev = revolves.add(revInput)
+            #NEW
+            ext = extrudes.add(extInput)
+            #ext = extrudes.addSimple()
+
+            
+            #print(extrudes.endFaces.count)
+            #print(extrudes.endFaces.classType)
+            #print(extrudes.endFaces.objectType)
+
+        
+
+
 
             #get component collection
             #comp = rev.parentComponent
@@ -218,6 +241,7 @@ def createDonuts(amountOfDonuts, donutThickness):
 
             #get the current body
             bodytocolor = rootComp.bRepBodies.item(i)
+            
 
             # Create a copy of the existing appearance.
             newAppear = design.appearances.addByCopy(yellowAppear, 'Color ' + str(i+1))
@@ -232,6 +256,12 @@ def createDonuts(amountOfDonuts, donutThickness):
 
             #and color the body with this new material
             bodytocolor.appearance = newAppear
+
+
+            # Create a sketch.
+            surface = ext.faces.item(0)
+            print(surface.objectType)
+            sk = rootComp.sketches.add(surface, surface.createForAssemblyContext)
 
 
             i=i+1
