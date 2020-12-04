@@ -271,6 +271,11 @@ def createDonuts(amountOfDonuts, donutThickness):
             face = ext.faces.item(1)
             print("ext")
             print(face.objectType)
+            print(face.area)
+            print(face.geometry)
+            print(face.evaluator)
+            print(face.body)
+            print(face.attributes)
             #edge = face.edges.item(0)
 
 
@@ -289,7 +294,7 @@ def createDonuts(amountOfDonuts, donutThickness):
             #sketchOnCylinder = sketches.add(face)
             #surface = ext.faces.item(0)
             #print(surface.objectType)
-            #print(face.size)
+            
             #centerPoint = face.centroid
             sk = rootComp.sketches.add(face)
             #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
