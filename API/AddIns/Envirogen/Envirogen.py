@@ -222,6 +222,8 @@ def createDonuts(amountOfDonuts, donutThickness):
             ext = extrudes.add(extInput)
             #ext = extrudes.addSimple()
 
+
+
             
             #print(extrudes.endFaces.count)
             #print(extrudes.endFaces.classType)
@@ -257,11 +259,36 @@ def createDonuts(amountOfDonuts, donutThickness):
             #and color the body with this new material
             bodytocolor.appearance = newAppear
 
+            # Get one face and edge of the extrusion body
+            #face = extrudes.endFaces.item(0)
+            #print("extrudes")
+            #print(face.objectType)
+            #exttudes has no endfaces
+            #face = extInput.endFaces.item(0)
+            #print("extInput")
+            #print(face.objectType)
+            # has no endfaces
+            face = ext.endFaces.item(0)
+            print("ext")
+            print(face.objectType)
+            #edge = face.edges.item(0)
+
+
+            # Create a slant construction plane with an angle of 45 deg on the xZConstructionPlane
+            planeInput = rootComp.constructionPlanes.createInput()
+            planeInput.setByAngle(edge, adsk.core.ValueInput.createByString('45 deg'), rootComp.xZConstructionPlane)
+            plane = rootComp.constructionPlanes.add(planeInput)
+            
+            # Create another sketch containing a circle profile on the slant plane
+            toolSketch = rootComp.sketches.add(plane)
+            sketchCircles = toolSketch.sketchCurves.sketchCircles
+            circle = sketchCircles.addByCenterRadius(point0, 3)
+
 
             # Create a sketch.
-            surface = ext.faces.item(0)
-            print(surface.objectType)
-            sk = rootComp.sketches.add(surface, surface.createForAssemblyContext)
+            #surface = ext.faces.item(0)
+            #print(surface.objectType)
+            #sk = rootComp.sketches.add()
 
 
             i=i+1
