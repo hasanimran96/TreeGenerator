@@ -214,7 +214,7 @@ def createDonuts(amountOfDonuts, donutThickness):
             dist = adsk.core.ValueInput.createByReal(5)
             extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
         dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
-            extInput.isSolid = False
+            extInput.isSolid = True
                     
             # Create the revolve by calling the add method on the RevolveFeatures collection and passing it the RevolveInput object.
             #rev = revolves.add(revInput)
@@ -268,28 +268,31 @@ def createDonuts(amountOfDonuts, donutThickness):
             #print("extInput")
             #print(face.objectType)
             # has no endfaces
-            face = ext.endFaces.item(0)
+            face = ext.faces.item(1)
             print("ext")
             print(face.objectType)
             #edge = face.edges.item(0)
 
 
             # Create a slant construction plane with an angle of 45 deg on the xZConstructionPlane
-            planeInput = rootComp.constructionPlanes.createInput()
-            planeInput.setByAngle(edge, adsk.core.ValueInput.createByString('45 deg'), rootComp.xZConstructionPlane)
-            plane = rootComp.constructionPlanes.add(planeInput)
+            #planeInput = rootComp.constructionPlanes.createInput()
+            #planeInput.setByAngle(edge, adsk.core.ValueInput.createByString('45 deg'), rootComp.xZConstructionPlane)
+            #plane = rootComp.constructionPlanes.add(planeInput)
             
             # Create another sketch containing a circle profile on the slant plane
-            toolSketch = rootComp.sketches.add(plane)
-            sketchCircles = toolSketch.sketchCurves.sketchCircles
-            circle = sketchCircles.addByCenterRadius(point0, 3)
+            #toolSketch = rootComp.sketches.add(plane)
+            #sketchCircles = toolSketch.sketchCurves.sketchCircles
+            #circle = sketchCircles.addByCenterRadius(point0, 3)
 
 
             # Create a sketch.
+            #sketchOnCylinder = sketches.add(face)
             #surface = ext.faces.item(0)
             #print(surface.objectType)
-            #sk = rootComp.sketches.add()
-
+            #print(face.size)
+            #centerPoint = face.centroid
+            sk = rootComp.sketches.add(face)
+            #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
 
             i=i+1
 
