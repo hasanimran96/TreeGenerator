@@ -156,13 +156,6 @@ def createDonuts(amountOfDonuts, donutThickness):
         xyPlane = rootComp.xYConstructionPlane
         sketch = sketches.add(xyPlane)
 
-        # 1st
-
-        # Create a new ObjectCollection.
-        objColl = adsk.core.ObjectCollection.create()
-
-        # 2nd
-
         # Get the SketchCircles collection from an existing sketch.
         circles = sketch.sketchCurves.sketchCircles
 
