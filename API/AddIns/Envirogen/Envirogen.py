@@ -177,6 +177,9 @@ def createDonuts(amountOfDonuts, donutThickness):
         libAppear.copyTo(design)
         yellowAppear = design.appearances.itemByName(libAppear.name)
 
+
+
+
         # loop requested amount of times
         #anzahlringe = random.randint(4, 9)
         i = 0
@@ -255,7 +258,8 @@ def createDonuts(amountOfDonuts, donutThickness):
             # print("extInput")
             # print(face.objectType)
             # has no endfaces
-            face = ext.faces.item(1)
+            #adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead ::: face = ext.faces.item(1) :::this worked
+            face = ext.endFaces.item(0)
             print("ext")
             print(face.objectType)
             print(face.area)
@@ -281,8 +285,25 @@ def createDonuts(amountOfDonuts, donutThickness):
             # print(surface.objectType)
 
             #centerPoint = face.centroid
+            #adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead 
             sk = rootComp.sketches.add(face)
             #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
+
+            #prepares the sphere, using only the centerpoint of the surface though.
+            bodies = rootComp.bRepBodies
+            tBrep = adsk.fusion.TemporaryBRepManager.get()
+            centerPoint = face.centroid
+            sphereBody = tBrep.createSphere(centerPoint, 3)
+                
+            # Create a base feature
+            baseFeats = rootComp.features.baseFeatures
+            baseFeat = baseFeats.add()
+            
+            #adds the sphere. we lose reference to the cylinder though it seems. at least in the UI
+            baseFeat.startEdit()
+
+
+            body = bodies.add(sphereBody, baseFeat)
 
             i = i+1
 
