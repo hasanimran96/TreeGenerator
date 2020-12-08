@@ -291,6 +291,7 @@ def createDonuts(amountOfDonuts, donutThickness):
 
             #prepares the sphere, using only the centerpoint of the surface though.
             bodies = rootComp.bRepBodies
+            #maybe possible with permanent?
             tBrep = adsk.fusion.TemporaryBRepManager.get()
             centerPoint = face.centroid
             sphereBody = tBrep.createSphere(centerPoint, 3)
@@ -304,6 +305,7 @@ def createDonuts(amountOfDonuts, donutThickness):
 
 
             body = bodies.add(sphereBody, baseFeat)
+            baseFeat.finishEdit()
 
             i = i+1
 
