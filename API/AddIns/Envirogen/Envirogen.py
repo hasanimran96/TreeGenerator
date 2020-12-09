@@ -58,12 +58,13 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         inputs = cmd.commandInputs
 
         # Create a check box to get if it should be a random number.
-        isRandom = inputs.addBoolValueInput('isRandom', 'Random # of Rings',
+        highCustomizability = inputs.addBoolValueInput('highCustomizability', 'highCustomizability',
                                             True, '', False)
 
         # Create the value input to get the number of rings.
-        fixedNrOfRings = inputs.addIntegerSpinnerCommandInput(
-            'fixedNrOfRings', '# of Rings', 1, 100, 1, 1)
+        baseSize = inputs.addIntegerSpinnerCommandInput(
+            'baseSize', 'Base Size', 5, 30, 1, 10)
+        
         # Create the slider to get the thickness setting the range of the slider to
         # be 10 to 24 of whatever the current document unit is.
         app = adsk.core.Application.get()
@@ -72,11 +73,38 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         minVal = des.unitsManager.convert(
             10, des.unitsManager.defaultLengthUnits, 'cm')
         maxVal = des.unitsManager.convert(
-            24, des.unitsManager.defaultLengthUnits, 'cm')
+            20, des.unitsManager.defaultLengthUnits, 'cm')
         thickness = inputs.addFloatSliderCommandInput('thickness',
                                                       'Thickness',
                                                       des.unitsManager.defaultLengthUnits,
-                                                      minVal, maxVal, False)
+                                                      minVal, maxVal, True)
+
+
+        # Create the slider to get the length setting the range of the slider to
+        # be 10 to 24 of whatever the current document unit is.
+        minVal = des.unitsManager.convert(
+            100, des.unitsManager.defaultLengthUnits, 'cm')
+        maxVal = des.unitsManager.convert(
+            200, des.unitsManager.defaultLengthUnits, 'cm')
+        treeHeight = inputs.addFloatSliderCommandInput('height',
+                                                      'Height',
+                                                      des.unitsManager.defaultLengthUnits,
+                                                      minVal, maxVal, True)
+
+        print("created the length slider")
+
+        # Create the slider to get the leaves radius setting the range of the slider to
+        # be 10 to 24 of whatever the current document unit is.
+        minVal = des.unitsManager.convert(
+            30, des.unitsManager.defaultLengthUnits, 'cm')
+        maxVal = des.unitsManager.convert(
+            60, des.unitsManager.defaultLengthUnits, 'cm')
+        leavesRadius = inputs.addFloatSliderCommandInput('leavesRadius',
+                                                      'LeavesRadius',
+                                                      des.unitsManager.defaultLengthUnits,
+                                                      minVal, maxVal, True)
+
+        
 
         # Connect to the execute event.
         onExecute = SampleCommandExecuteHandler()
@@ -100,18 +128,39 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         # Get the values from the command inputs.
         inputs = eventArgs.command.commandInputs
 
-        isRandomAmount = inputs.itemById('isRandom').value
-        fixedAamountOfDonuts = inputs.itemById('fixedNrOfRings').value
-        donutThickness = inputs.itemById('thickness').valueOne
+        hasHighCustomizability = inputs.itemById('highCustomizability').value
 
-        # depending on the choice assign the amount of rings
-        if isRandomAmount:
-            amountOfDonuts = random.randint(5, 10)
-        else:
-            amountOfDonuts = fixedAamountOfDonuts
+        baseSize = inputs.itemById('baseSize').value
+
+        donutMinThickness = inputs.itemById('thickness').valueOne
+        donutMaxThickness = inputs.itemById('thickness').valueTwo
+
+        treeMinHeight = inputs.itemById('height').valueOne
+        treeMaxHeight = inputs.itemById('height').valueTwo
+        print("got all values except leaves")
+        #leavesMinRadius = inputs.itemById('leavesRadius').valueOne
+        #leavesMaxRadius = inputs.itemById('leavesRadius').valuetwo
+        print("got all values ")
+
+       
+
+
+        if hasHighCustomizability:
+            donutThickness = random.randint(donutMinThickness, donutMaxThickness)
+            treeHeight = random.randint(treeMinHeight, treeMaxHeight)
+            #leavesRadius = random.randint(leavesMinRadius, leavesMaxRadius)
+        else: 
+            donutThickness = baseSize/10 + random.randint(0, baseSize/10)
+            treeHeight = baseSize + random.randint(0, baseSize/5)
+
+        leavesRadius = baseSize/3 + random.randint(0, baseSize/5)
+
+        
+
+
 
         # call the method to create the rings
-        createDonuts(amountOfDonuts, donutThickness)
+        createDonuts(donutThickness, treeHeight, leavesRadius)
 
 
 def stop(context):
@@ -137,7 +186,7 @@ def stop(context):
 # arguments
 # amountOfDonuts int how many rings to create
 # donutThickness radius of the rings
-def createDonuts(amountOfDonuts, donutThickness):
+def createDonuts(donutThickness, treeHeight, leavesRadius):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -180,10 +229,12 @@ def createDonuts(amountOfDonuts, donutThickness):
 
 
 
-        # loop requested amount of times
-        #anzahlringe = random.randint(4, 9)
+        #only one tree
         i = 0
-        while i <= (amountOfDonuts-1):
+        while i <= (0):
+            
+
+            
 
             # new donut
             # Call an add method on the collection to create a new circle.
@@ -204,11 +255,9 @@ def createDonuts(amountOfDonuts, donutThickness):
             extInput = extrudes.createInput(
                 prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
-            # Define a revolve by specifying fractions of 2 pi(full circle) as the revolve angle.
-            #angle = adsk.core.ValueInput.createByReal(math.pi * 2 * ((i+1)/amountOfDonuts) )
-            #revInput.setAngleExtent(False, angle)
-            # NEW
-            dist = adsk.core.ValueInput.createByReal(5)
+            # random value for the tree height, and extrude the cirlce by that amount
+            
+            dist = adsk.core.ValueInput.createByReal(treeHeight)
             extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
                 dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
             extInput.isSolid = True
@@ -294,7 +343,7 @@ def createDonuts(amountOfDonuts, donutThickness):
             #maybe possible with permanent?
             tBrep = adsk.fusion.TemporaryBRepManager.get()
             centerPoint = face.centroid
-            sphereBody = tBrep.createSphere(centerPoint, 3)
+            sphereBody = tBrep.createSphere(centerPoint, leavesRadius)
                 
             # Create a base feature
             baseFeats = rootComp.features.baseFeatures
