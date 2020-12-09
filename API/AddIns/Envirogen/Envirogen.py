@@ -59,11 +59,11 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
         # Create a check box to get if it should be a random number.
         isRandom = inputs.addBoolValueInput('isRandom', 'Random # of Rings',
-                                            True, '', True)
+                                            True, '', False)
 
         # Create the value input to get the number of rings.
         fixedNrOfRings = inputs.addIntegerSpinnerCommandInput(
-            'fixedNrOfRings', '# of Rings', 1, 100, 1, 5)
+            'fixedNrOfRings', '# of Rings', 1, 100, 1, 1)
         # Create the slider to get the thickness setting the range of the slider to
         # be 10 to 24 of whatever the current document unit is.
         app = adsk.core.Application.get()
@@ -95,7 +95,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         # Code to react to the event.
         app = adsk.core.Application.get()
         ui = app.userInterface
-        ui.messageBox('Ready for Donuts?')
+        ui.messageBox('Ready for a Tree?')
 
         # Get the values from the command inputs.
         inputs = eventArgs.command.commandInputs
@@ -244,7 +244,7 @@ def createDonuts(amountOfDonuts, donutThickness):
             red = random.randint(0, 255)
             green = random.randint(0, 255)
             blue = random.randint(0, 255)
-            colorProp.value = adsk.core.Color.create(red, green, blue, 1)
+            colorProp.value = adsk.core.Color.create(139,69,19, 1)  #use brown for trunk
 
             # and color the body with this new material
             bodytocolor.appearance = newAppear
@@ -306,6 +306,28 @@ def createDonuts(amountOfDonuts, donutThickness):
 
             body = bodies.add(sphereBody, baseFeat)
             baseFeat.finishEdit()
+
+
+            # Create a copy of the existing appearance.
+            newAppear = design.appearances.addByCopy(
+                yellowAppear, 'Color ' + str(i+1))
+
+            # Edit the "Color" property by setting it to a random color.
+            colorProp = adsk.core.ColorProperty.cast(
+                newAppear.appearanceProperties.itemByName('Color'))
+            red = random.randint(0, 255)
+            green = random.randint(0, 255)
+            blue = random.randint(0, 255)
+            colorProp.value = adsk.core.Color.create(0,100,0, 1)  #use green for leaves
+
+            # get the current body
+            leavestocolor = rootComp.bRepBodies.item(i+1)
+
+            # and color the sphere with this new material
+            print("body object type is")
+            print(body.objectType)
+            print(newAppear.appearanceProperties.itemByName('Color'))
+            leavestocolor.appearance = newAppear
 
             i = i+1
 
