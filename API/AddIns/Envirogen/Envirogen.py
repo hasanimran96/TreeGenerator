@@ -331,6 +331,14 @@ def createDonuts(amountOfDonuts, donutThickness):
 
             i = i+1
 
+
+            #in the end combine objects to one
+            #color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
+            #close program and start again. does fusion keep the material names that we created last time or does it store them internally
+            #to create unique handle if needed: combination of all random values
+            #hasan: color to body itself
+            #simon: randomize integration with ui
+
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
