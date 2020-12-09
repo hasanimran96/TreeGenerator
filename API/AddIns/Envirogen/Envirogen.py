@@ -59,12 +59,12 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
         # Create a check box to get if it should be a random number.
         highCustomizability = inputs.addBoolValueInput('highCustomizability', 'highCustomizability',
-                                            True, '', False)
+                                                       True, '', False)
 
         # Create the value input to get the number of rings.
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Base Size', 5, 30, 1, 10)
-        
+
         # Create the slider to get the thickness setting the range of the slider to
         # be 10 to 24 of whatever the current document unit is.
         app = adsk.core.Application.get()
@@ -75,12 +75,9 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         maxVal = des.unitsManager.convert(
             20, des.unitsManager.defaultLengthUnits, 'mm')
         thickness = inputs.addIntegerSliderCommandInput('thickness',
-                                                      'Thickness',
-                                                      
-                                                      10, 20, True)
+                                                        'Thickness',
 
-
-
+                                                        10, 20, True)
 
         # Create the slider to get the length setting the range of the slider to
         # be 10 to 24 of whatever the current document unit is.
@@ -89,27 +86,22 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         maxVal = des.unitsManager.convert(
             200, des.unitsManager.defaultLengthUnits, 'mm')
         treeHeight = inputs.addIntegerSliderCommandInput('height',
-                                                      'Height',
-                                                      
-                                                      100, 200, True)
-                                                      #des.unitsManager.defaultLengthUnits,
+                                                         'Height',
+
+                                                         100, 200, True)
+        # des.unitsManager.defaultLengthUnits,
 
         print("created the length slider")
         print(inputs.count)
-
 
         minVal = des.unitsManager.convert(
             10, des.unitsManager.defaultLengthUnits, 'mm')
         maxVal = des.unitsManager.convert(
             20, des.unitsManager.defaultLengthUnits, 'mm')
         treetops = inputs.addIntegerSliderCommandInput('treetops',
-                                                      'treetops',
-                                                      
-                                                      30, 60, True)
+                                                       'treetops',
 
-
-
-        
+                                                       30, 60, True)
 
         # Connect to the execute event.
         onExecute = SampleCommandExecuteHandler()
@@ -133,11 +125,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         # Get the values from the command inputs.
         inputs = eventArgs.command.commandInputs
 
-
-
         hasHighCustomizability = inputs.itemById('highCustomizability').value
-
-
 
         baseSize = inputs.itemById('baseSize').value
 
@@ -148,8 +136,6 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         print("donutMaxThickness")
         print(donutMaxThickness)
 
-
-
         treeMinHeight = inputs.itemById('height').valueOne
         treeMaxHeight = inputs.itemById('height').valueTwo
         print("got all values except leaves")
@@ -157,27 +143,20 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         treetopsMin = inputs.itemById('treetops').valueOne
         treetopsMax = inputs.itemById('treetops').valueTwo
         print("got all values and treetops leaves")
-       
-
 
         if hasHighCustomizability:
-            donutThickness = random.randint(donutMinThickness, donutMaxThickness)
+            donutThickness = random.randint(
+                donutMinThickness, donutMaxThickness)
             print("donutThickness")
             print(donutThickness)
             treeHeight = random.randint(treeMinHeight, treeMaxHeight)
             leavesRadius = random.randint(treetopsMin, treetopsMax)
-        else: 
+        else:
             donutThickness = baseSize + random.randint(0, baseSize/2)
             treeHeight = baseSize*10 + random.randint(0, baseSize*3)
             print("donutThickness")
             print(donutThickness)
             leavesRadius = baseSize*5 + random.randint(0, baseSize)
-
-        
-
-        
-
-
 
         # call the method to create the rings
         createDonuts(donutThickness, treeHeight, leavesRadius)
@@ -246,15 +225,9 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
         libAppear.copyTo(design)
         yellowAppear = design.appearances.itemByName(libAppear.name)
 
-
-
-
-        #only one tree
+        # only one tree
         i = 0
         while i <= (0):
-            
-
-            
 
             # new donut
             # Call an add method on the collection to create a new circle.
@@ -276,7 +249,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
                 prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
             # random value for the tree height, and extrude the cirlce by that amount
-            
+
             dist = adsk.core.ValueInput.createByReal(treeHeight)
             extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
                 dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
@@ -301,7 +274,10 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # print(libAppear.name)
 
             # get the current body
-            bodytocolor = rootComp.bRepBodies.item(i)
+            # bodytocolor = rootComp.bRepBodies.item(i)
+            # just color the current branch that we just extruded
+            bodytocolor = ext.bodies.item(i)
+
 
             # Create a copy of the existing appearance.
             newAppear = design.appearances.addByCopy(
@@ -313,7 +289,8 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             red = random.randint(100, 180)
             green = random.randint(50, 90)
             blue = random.randint(0, 20)
-            colorProp.value = adsk.core.Color.create(red,green,blue, 1)  #use brown for trunk
+            colorProp.value = adsk.core.Color.create(
+                red, green, blue, 1)  # use brown for trunk
 
             # and color the body with this new material
             bodytocolor.appearance = newAppear
@@ -327,7 +304,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # print("extInput")
             # print(face.objectType)
             # has no endfaces
-            #adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead ::: face = ext.faces.item(1) :::this worked
+            # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead ::: face = ext.faces.item(1) :::this worked
             face = ext.endFaces.item(0)
             print("ext")
             print(face.objectType)
@@ -354,28 +331,25 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # print(surface.objectType)
 
             #centerPoint = face.centroid
-            #adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead 
+            # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead
             sk = rootComp.sketches.add(face)
             #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
 
-            #prepares the sphere, using only the centerpoint of the surface though.
+            # prepares the sphere, using only the centerpoint of the surface though.
             bodies = rootComp.bRepBodies
-            #maybe possible with permanent?
+            # maybe possible with permanent?
             tBrep = adsk.fusion.TemporaryBRepManager.get()
             centerPoint = face.centroid
             sphereBody = tBrep.createSphere(centerPoint, leavesRadius)
-                
+
             # Create a base feature
             baseFeats = rootComp.features.baseFeatures
             baseFeat = baseFeats.add()
-            
-            #adds the sphere. we lose reference to the cylinder though it seems. at least in the UI
+
+            # adds the sphere. we lose reference to the cylinder though it seems. at least in the UI
             baseFeat.startEdit()
 
-
             body = bodies.add(sphereBody, baseFeat)
-            baseFeat.finishEdit()
-
 
             # Create a copy of the existing appearance.
             newAppear = design.appearances.addByCopy(
@@ -387,10 +361,14 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             red = random.randint(0, 30)
             green = random.randint(100, 200)
             blue = random.randint(0, 30)
-            colorProp.value = adsk.core.Color.create(red,green,blue, 1)  #use green for leaves
+            colorProp.value = adsk.core.Color.create(
+                red, green, blue, 1)  # use green for leaves
 
             # get the current body
-            leavestocolor = rootComp.bRepBodies.item(i+1)
+            # leavestocolor = rootComp.bRepBodies.item(i+1)
+            # get the current sphere to color
+            leavestocolor = body
+
 
             # and color the sphere with this new material
             print("body object type is")
@@ -398,15 +376,16 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             print(newAppear.appearanceProperties.itemByName('Color'))
             leavestocolor.appearance = newAppear
 
+            baseFeat.finishEdit()
+
             i = i+1
 
-
-            #in the end combine objects to one
-            #color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
-            #close program and start again. does fusion keep the material names that we created last time or does it store them internally
-            #to create unique handle if needed: combination of all random values
-            #hasan: color to body itself
-            #simon: randomize integration with ui
+            # in the end combine objects to one
+            # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
+            # close program and start again. does fusion keep the material names that we created last time or does it store them internally
+            # to create unique handle if needed: combination of all random values
+            # hasan: color to body itself
+            # simon: randomize integration with ui
 
     except:
         if ui:
