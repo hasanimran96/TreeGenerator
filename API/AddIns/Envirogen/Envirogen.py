@@ -241,10 +241,10 @@ def createDonuts(amountOfDonuts, donutThickness):
             # Edit the "Color" property by setting it to a random color.
             colorProp = adsk.core.ColorProperty.cast(
                 newAppear.appearanceProperties.itemByName('Color'))
-            red = random.randint(0, 255)
-            green = random.randint(0, 255)
-            blue = random.randint(0, 255)
-            colorProp.value = adsk.core.Color.create(139,69,19, 1)  #use brown for trunk
+            red = random.randint(100, 180)
+            green = random.randint(50, 90)
+            blue = random.randint(0, 20)
+            colorProp.value = adsk.core.Color.create(red,green,blue, 1)  #use brown for trunk
 
             # and color the body with this new material
             bodytocolor.appearance = newAppear
@@ -315,10 +315,10 @@ def createDonuts(amountOfDonuts, donutThickness):
             # Edit the "Color" property by setting it to a random color.
             colorProp = adsk.core.ColorProperty.cast(
                 newAppear.appearanceProperties.itemByName('Color'))
-            red = random.randint(0, 255)
-            green = random.randint(0, 255)
-            blue = random.randint(0, 255)
-            colorProp.value = adsk.core.Color.create(0,100,0, 1)  #use green for leaves
+            red = random.randint(0, 30)
+            green = random.randint(100, 200)
+            blue = random.randint(0, 30)
+            colorProp.value = adsk.core.Color.create(red,green,blue, 1)  #use green for leaves
 
             # get the current body
             leavestocolor = rootComp.bRepBodies.item(i+1)
