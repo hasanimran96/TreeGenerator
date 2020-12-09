@@ -71,38 +71,43 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         des = adsk.fusion.Design.cast(app.activeProduct)
 
         minVal = des.unitsManager.convert(
-            10, des.unitsManager.defaultLengthUnits, 'cm')
+            10, des.unitsManager.defaultLengthUnits, 'mm')
         maxVal = des.unitsManager.convert(
-            20, des.unitsManager.defaultLengthUnits, 'cm')
-        thickness = inputs.addFloatSliderCommandInput('thickness',
+            20, des.unitsManager.defaultLengthUnits, 'mm')
+        thickness = inputs.addIntegerSliderCommandInput('thickness',
                                                       'Thickness',
-                                                      des.unitsManager.defaultLengthUnits,
-                                                      minVal, maxVal, True)
+                                                      
+                                                      10, 20, True)
+
+
 
 
         # Create the slider to get the length setting the range of the slider to
         # be 10 to 24 of whatever the current document unit is.
         minVal = des.unitsManager.convert(
-            100, des.unitsManager.defaultLengthUnits, 'cm')
+            100, des.unitsManager.defaultLengthUnits, 'mm')
         maxVal = des.unitsManager.convert(
-            200, des.unitsManager.defaultLengthUnits, 'cm')
-        treeHeight = inputs.addFloatSliderCommandInput('height',
+            200, des.unitsManager.defaultLengthUnits, 'mm')
+        treeHeight = inputs.addIntegerSliderCommandInput('height',
                                                       'Height',
-                                                      des.unitsManager.defaultLengthUnits,
-                                                      minVal, maxVal, True)
+                                                      
+                                                      100, 200, True)
+                                                      #des.unitsManager.defaultLengthUnits,
 
         print("created the length slider")
+        print(inputs.count)
 
-        # Create the slider to get the leaves radius setting the range of the slider to
-        # be 10 to 24 of whatever the current document unit is.
+
         minVal = des.unitsManager.convert(
-            30, des.unitsManager.defaultLengthUnits, 'cm')
+            10, des.unitsManager.defaultLengthUnits, 'mm')
         maxVal = des.unitsManager.convert(
-            60, des.unitsManager.defaultLengthUnits, 'cm')
-        leavesRadius = inputs.addFloatSliderCommandInput('leavesRadius',
-                                                      'LeavesRadius',
-                                                      des.unitsManager.defaultLengthUnits,
-                                                      minVal, maxVal, True)
+            20, des.unitsManager.defaultLengthUnits, 'mm')
+        treetops = inputs.addIntegerSliderCommandInput('treetops',
+                                                      'treetops',
+                                                      
+                                                      30, 60, True)
+
+
 
         
 
@@ -128,32 +133,47 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         # Get the values from the command inputs.
         inputs = eventArgs.command.commandInputs
 
+
+
         hasHighCustomizability = inputs.itemById('highCustomizability').value
+
+
 
         baseSize = inputs.itemById('baseSize').value
 
         donutMinThickness = inputs.itemById('thickness').valueOne
         donutMaxThickness = inputs.itemById('thickness').valueTwo
+        print("donutMinThickness")
+        print(donutMinThickness)
+        print("donutMaxThickness")
+        print(donutMaxThickness)
+
+
 
         treeMinHeight = inputs.itemById('height').valueOne
         treeMaxHeight = inputs.itemById('height').valueTwo
         print("got all values except leaves")
-        #leavesMinRadius = inputs.itemById('leavesRadius').valueOne
-        #leavesMaxRadius = inputs.itemById('leavesRadius').valuetwo
-        print("got all values ")
 
+        treetopsMin = inputs.itemById('treetops').valueOne
+        treetopsMax = inputs.itemById('treetops').valueTwo
+        print("got all values and treetops leaves")
        
 
 
         if hasHighCustomizability:
             donutThickness = random.randint(donutMinThickness, donutMaxThickness)
+            print("donutThickness")
+            print(donutThickness)
             treeHeight = random.randint(treeMinHeight, treeMaxHeight)
-            #leavesRadius = random.randint(leavesMinRadius, leavesMaxRadius)
+            leavesRadius = random.randint(treetopsMin, treetopsMax)
         else: 
-            donutThickness = baseSize/10 + random.randint(0, baseSize/10)
-            treeHeight = baseSize + random.randint(0, baseSize/5)
+            donutThickness = baseSize + random.randint(0, baseSize/2)
+            treeHeight = baseSize*10 + random.randint(0, baseSize*3)
+            print("donutThickness")
+            print(donutThickness)
+            leavesRadius = baseSize*5 + random.randint(0, baseSize)
 
-        leavesRadius = baseSize/3 + random.randint(0, baseSize/5)
+        
 
         
 
