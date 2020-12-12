@@ -70,6 +70,8 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         app = adsk.core.Application.get()
         des = adsk.fusion.Design.cast(app.activeProduct)
 
+
+
         minVal = des.unitsManager.convert(
             10, des.unitsManager.defaultLengthUnits, 'mm')
         maxVal = des.unitsManager.convert(
