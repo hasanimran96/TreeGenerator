@@ -57,13 +57,15 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # Get the CommandInputs collection to create new command inputs.
         inputs = cmd.commandInputs
 
-        # Create a check box to get if it should be a random number.
-        highCustomizability = inputs.addBoolValueInput('highCustomizability', 'highCustomizability',
-                                                       True, '', False)
+
 
         # Create the value input to get the number of rings.
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Base Size', 5, 30, 1, 10)
+
+        # Create a check box to get if it should be a random number.
+        highCustomizability = inputs.addBoolValueInput('highCustomizability', 'highCustomizability',
+                                                       True, '', False)
 
         # Create the slider to get the thickness setting the range of the slider to
         # be 10 to 24 of whatever the current document unit is.
@@ -80,6 +82,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
                                                         'Thickness',
 
                                                         10, 20, True)
+        thickness.isVisible = False
 
         # Create the slider to get the length setting the range of the slider to
         # be 10 to 24 of whatever the current document unit is.
@@ -92,6 +95,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
                                                          100, 200, True)
         # des.unitsManager.defaultLengthUnits,
+        treeHeight.isVisible = False
 
         print("created the length slider")
         print(inputs.count)
@@ -104,11 +108,17 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
                                                        'treetops',
 
                                                        30, 60, True)
+        treetops.isVisible = False
 
         # Connect to the execute event.
         onExecute = SampleCommandExecuteHandler()
         cmd.execute.add(onExecute)
         handlers.append(onExecute)
+
+        # Connect to the inputChanged event.
+        onInputChanged = SampleCommandInputChangedHandler()
+        cmd.inputChanged.add(onInputChanged)
+        handlers.append(onInputChanged)
 
 
 # Event handler for the execute event.
@@ -181,6 +191,41 @@ def stop(context):
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+
+
+
+# Event handler for the inputChanged event.
+class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
+    def __init__(self):
+        super().__init__()
+    def notify(self, args):
+        eventArgs = adsk.core.InputChangedEventArgs.cast(args)
+        
+        # Check the value of the check box.
+        changedInput = eventArgs.input
+        if changedInput.id == 'highCustomizability':
+            inputs = eventArgs.firingEvent.sender.commandInputs
+            scaleInput = inputs.itemById('heightScale')
+			
+
+            #get all inputs
+            thicknessInput = inputs.itemById('thickness')
+            heightInput = inputs.itemById('height')
+            treetopInput = inputs.itemById('treetops')
+
+            # Change the visibility of the scale value input.
+            if changedInput.value == True:
+                thicknessInput.isVisible = True
+                heightInput.isVisible = True
+                treetopInput.isVisible = True
+            else:
+                thicknessInput.isVisible = False
+                heightInput.isVisible = False
+                treetopInput.isVisible = False
+
+
 
 
 # This method contains the actual code to create the rings
