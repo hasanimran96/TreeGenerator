@@ -15,15 +15,15 @@ def run(context):
     try:
         app = adsk.core.Application.get()
         ui = app.userInterface
-        ui.messageBox('In run function')
+        #ui.messageBox('In run function')
 
         # Get the CommandDefinitions collection.
         cmdDefs = ui.commandDefinitions
 
         # Create a button command definition.
         buttonSample = cmdDefs.addButtonDefinition('NewButtonDefIdPython',
-                                                   'Tree',
-                                                   'Sample button tooltip',
+                                                   'EnviroGen',
+                                                   'Generate new enviromental assets, such as trees with the ease of a click',
                                                    './resources/Button')
 
         # Connect to the command created event.
@@ -33,6 +33,7 @@ def run(context):
 
         # Get the ADD-INS panel in the model workspace.
         addInsPanel = ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
+        
 
         # Add the button to the bottom of the panel.
         buttonControl = addInsPanel.controls.addCommand(buttonSample)
@@ -59,16 +60,16 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
 
 
-        # Create the value input to get the number of rings.
+        # Create the value input to get the bbase size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Base Size', 5, 30, 1, 10)
 
-        # Create a check box to get if it should be a random number.
+        # Create a check box to get if high cusomizability is desired
         highCustomizability = inputs.addBoolValueInput('highCustomizability', 'highCustomizability',
                                                        True, '', False)
 
         # Create the slider to get the thickness setting the range of the slider to
-        # be 10 to 24 of whatever the current document unit is.
+        # be 10 to 20 of whatever the current document unit is.
         app = adsk.core.Application.get()
         des = adsk.fusion.Design.cast(app.activeProduct)
 
@@ -85,7 +86,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         thickness.isVisible = False
 
         # Create the slider to get the length setting the range of the slider to
-        # be 10 to 24 of whatever the current document unit is.
+        # be 100 to 200 of whatever the current document unit is.
         minVal = des.unitsManager.convert(
             100, des.unitsManager.defaultLengthUnits, 'mm')
         maxVal = des.unitsManager.convert(
@@ -100,6 +101,8 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         print("created the length slider")
         print(inputs.count)
 
+        # Create the slider to get the treetop size range of the slider to
+        # be 30 to 60 of whatever the current document unit is.
         minVal = des.unitsManager.convert(
             10, des.unitsManager.defaultLengthUnits, 'mm')
         maxVal = des.unitsManager.convert(
@@ -132,7 +135,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         # Code to react to the event.
         app = adsk.core.Application.get()
         ui = app.userInterface
-        ui.messageBox('Ready for a Tree?')
+        #ui.messageBox('Ready for a Tree?')
 
         # Get the values from the command inputs.
         inputs = eventArgs.command.commandInputs
@@ -156,6 +159,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         treetopsMax = inputs.itemById('treetops').valueTwo
         print("got all values and treetops leaves")
 
+        #assign values to random values based on either base size or selected ranges if high customizability is desired
         if hasHighCustomizability:
             donutThickness = random.randint(
                 donutMinThickness, donutMaxThickness)
@@ -170,7 +174,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
             print(donutThickness)
             leavesRadius = baseSize*5 + random.randint(0, baseSize)
 
-        # call the method to create the rings
+        # call the method to create the tree
         createDonuts(donutThickness, treeHeight, leavesRadius)
 
 
@@ -215,7 +219,7 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
             heightInput = inputs.itemById('height')
             treetopInput = inputs.itemById('treetops')
 
-            # Change the visibility of the scale value input.
+            # Change the visibility of the inputs related to high customizability
             if changedInput.value == True:
                 thicknessInput.isVisible = True
                 heightInput.isVisible = True
@@ -228,10 +232,11 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
 
 
 
-# This method contains the actual code to create the rings
+# This method contains the actual code to create the tree
 # arguments
-# amountOfDonuts int how many rings to create
 # donutThickness radius of the rings
+#treeHeight height of the tree
+#leavesRadius radius of the treetop
 def createDonuts(donutThickness, treeHeight, leavesRadius):
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -276,9 +281,9 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
         i = 0
         while i <= (0):
 
-            # new donut
+            # new tree
             # Call an add method on the collection to create a new circle.
-            circle1 = circles.addByCenterRadius(
+            circle = circles.addByCenterRadius(
                 adsk.core.Point3D.create(5*i, 0, 0), donutThickness)
 
             # Call an add method on the collection to create a new line.
@@ -288,21 +293,21 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
             prof = sketch.profiles.item(i)
 
-            # Create a revolve input object that defines the input for a revolve feature.
+            # Create a extrude input object that defines the input for a extrude feature.
             # When creating the input object, required settings are provided as arguments.
             #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
             # NEW
             extInput = extrudes.createInput(
                 prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
-            # random value for the tree height, and extrude the cirlce by that amount
+            #extrude the cirlce by treeheight amount
 
             dist = adsk.core.ValueInput.createByReal(treeHeight)
             extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
                 dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
             extInput.isSolid = True
 
-            # Create the revolve by calling the add method on the RevolveFeatures collection and passing it the RevolveInput object.
+            # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
             #rev = revolves.add(revInput)
             # NEW
             ext = extrudes.add(extInput)
@@ -322,7 +327,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
             # get the current body
             # bodytocolor = rootComp.bRepBodies.item(i)
-            # just color the current branch that we just extruded
+            # just get the current trunk that we just extruded
             bodytocolor = ext.bodies.item(i)
 
 
@@ -330,7 +335,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             newAppear = design.appearances.addByCopy(
                 yellowAppear, 'Color ' + str(i+1))
 
-            # Edit the "Color" property by setting it to a random color.
+            # Edit the "Color" property by setting it to a random brown color.
             colorProp = adsk.core.ColorProperty.cast(
                 newAppear.appearanceProperties.itemByName('Color'))
             red = random.randint(100, 180)
@@ -394,6 +399,8 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             baseFeat = baseFeats.add()
 
             # adds the sphere. we lose reference to the cylinder though it seems. at least in the UI
+            #reference was lost because of the edit state. once its done we see the cylinder again
+
             baseFeat.startEdit()
 
             body = bodies.add(sphereBody, baseFeat)
@@ -402,7 +409,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             newAppear = design.appearances.addByCopy(
                 yellowAppear, 'Color ' + str(i+1))
 
-            # Edit the "Color" property by setting it to a random color.
+            # Edit the "Color" property by setting it to a green color.
             colorProp = adsk.core.ColorProperty.cast(
                 newAppear.appearanceProperties.itemByName('Color'))
             red = random.randint(0, 30)
