@@ -32,7 +32,7 @@ def run(context):
         handlers.append(sampleCommandCreated)
 
         # Get the ADD-INS panel in the model workspace.
-        addInsPanel = ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
+        addInsPanel = ui.allToolbarPanels.itemById('SolidCreatePanel')
         
 
         # Add the button to the bottom of the panel.
@@ -143,6 +143,9 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         hasHighCustomizability = inputs.itemById('highCustomizability').value
 
         baseSize = inputs.itemById('baseSize').value
+        print("base size")
+        print(baseSize)
+
 
         donutMinThickness = inputs.itemById('thickness').valueOne
         donutMaxThickness = inputs.itemById('thickness').valueTwo
@@ -168,7 +171,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
             treeHeight = random.randint(treeMinHeight, treeMaxHeight)
             leavesRadius = random.randint(treetopsMin, treetopsMax)
         else:
-            donutThickness = baseSize + random.randint(0, baseSize/2)
+            donutThickness = baseSize + random.randint(0, round(baseSize/2))
             treeHeight = baseSize*10 + random.randint(0, baseSize*3)
             print("donutThickness")
             print(donutThickness)
@@ -188,7 +191,7 @@ def stop(context):
         if cmdDef:
             cmdDef.deleteMe()
 
-        addinsPanel = ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
+        addinsPanel = ui.allToolbarPanels.itemById('SolidCreatePanel')
         cntrl = addinsPanel.controls.itemById('NewButtonDefIdPython')
         if cntrl:
             cntrl.deleteMe()
