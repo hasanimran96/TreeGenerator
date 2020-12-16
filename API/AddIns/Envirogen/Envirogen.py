@@ -62,10 +62,10 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
         # Create the value input to get the bbase size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
-            'baseSize', 'Base Size', 5, 30, 1, 10)
+            'baseSize', 'Tree size', 5, 30, 1, 10)
 
         # Create a check box to get if high cusomizability is desired
-        highCustomizability = inputs.addBoolValueInput('highCustomizability', 'highCustomizability',
+        highCustomizability = inputs.addBoolValueInput('highCustomizability', 'Customize tree',
                                                        True, '', False)
 
         # Create the slider to get the thickness setting the range of the slider to
@@ -80,7 +80,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         maxVal = des.unitsManager.convert(
             20, des.unitsManager.defaultLengthUnits, 'mm')
         thickness = inputs.addIntegerSliderCommandInput('thickness',
-                                                        'Thickness',
+                                                        'Trunk thickness',
 
                                                         10, 20, True)
         thickness.isVisible = False
@@ -92,7 +92,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         maxVal = des.unitsManager.convert(
             200, des.unitsManager.defaultLengthUnits, 'mm')
         treeHeight = inputs.addIntegerSliderCommandInput('height',
-                                                         'Height',
+                                                         'Trunk height',
 
                                                          100, 200, True)
         # des.unitsManager.defaultLengthUnits,
@@ -108,7 +108,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         maxVal = des.unitsManager.convert(
             20, des.unitsManager.defaultLengthUnits, 'mm')
         treetops = inputs.addIntegerSliderCommandInput('treetops',
-                                                       'treetops',
+                                                       'Treetop diameter',
 
                                                        30, 60, True)
         treetops.isVisible = False
@@ -288,7 +288,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # Call an add method on the collection to create a new circle.
             circle = circles.addByCenterRadius(
                 adsk.core.Point3D.create(5*i, 0, 0), donutThickness)
-
+            
             # Call an add method on the collection to create a new line.
             axis = lines.addByTwoPoints(adsk.core.Point3D.create(
                 5*i-1, -4, 0), adsk.core.Point3D.create(5*i+1, -4, 0))
@@ -331,7 +331,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # get the current body
             # bodytocolor = rootComp.bRepBodies.item(i)
             # just get the current trunk that we just extruded
-            bodytocolor = ext.bodies.item(i)
+            trunkBody = ext.bodies.item(i)
 
 
             # Create a copy of the existing appearance.
@@ -348,7 +348,39 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
                 red, green, blue, 1)  # use brown for trunk
 
             # and color the body with this new material
-            bodytocolor.appearance = newAppear
+            trunkBody.appearance = newAppear
+
+
+    
+            #add the base for the trunk
+            trunkBaseSketch = sketches.add(xyPlane)
+
+            # Get the SketchCircles collection from an existing sketch.
+            trunkBaseCircles = trunkBaseSketch.sketchCurves.sketchCircles
+
+            #circle on sketch
+            trunkBase = trunkBaseCircles.addByCenterRadius(
+                adsk.core.Point3D.create(5*i, 0, 0), 2*donutThickness)
+            #get profile
+            trunkBaseProf = trunkBaseSketch.profiles.item(i)
+            #create input object
+            trunkBaseExtInput = extrudes.createInput(
+                trunkBaseProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            #extrude the cirlce by treeheight amount
+            trunkBaseDist = adsk.core.ValueInput.createByReal(1)
+            trunkBaseExtInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+                trunkBaseDist), adsk.fusion.ExtentDirections.NegativeExtentDirection)
+            trunkBaseExtInput.isSolid = True
+            #add body
+            trunkBaseExt = extrudes.add(trunkBaseExtInput)
+            #get body
+            trunkBaseBody = trunkBaseExt.bodies.item(i)
+
+
+
+
+
+
 
             # Get one face and edge of the extrusion body
             #face = extrudes.endFaces.item(0)
@@ -434,6 +466,39 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             leavestocolor.appearance = newAppear
 
             baseFeat.finishEdit()
+
+
+
+
+
+            #combine trunk and trunkbase
+            TargetBody = trunkBody
+
+
+            ToolBodies = adsk.core.ObjectCollection.create()
+            ToolBodies.add(trunkBaseBody)
+            
+            print("ToolBodies.objectType")
+            print(ToolBodies.objectType)
+
+            CombineCutInput = rootComp.features.combineFeatures.createInput(TargetBody, ToolBodies )
+            
+            CombineCutFeats = rootComp.features.combineFeatures
+            CombineCutInput = CombineCutFeats.createInput(TargetBody, ToolBodies)
+            CombineCutFeats.add(CombineCutInput)
+
+
+            combinedTrunkEdges = trunkBody.edges
+            print("faces of new body")
+            print(combinedTrunkEdges.count)
+
+
+
+
+
+
+
+
 
             i = i+1
 
