@@ -489,13 +489,43 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
 
             combinedTrunkEdges = trunkBody.edges
-            print("faces of new body")
+            print("combined edges")
             print(combinedTrunkEdges.count)
+            print(combinedTrunkEdges.objectType)
 
 
 
 
 
+            chamferSize = adsk.core.ValueInput.createByReal(0.6*donutThickness)
+            #chamfersample
+            #prepare chamfer
+            #faces = sweep.faces
+            edges  = adsk.core.ObjectCollection.create()
+            edges.add(combinedTrunkEdges.item(1))
+                
+            chamfers = rootComp.features.chamferFeatures
+            
+            chamferInput = chamfers.createInput(edges,False)
+            chamferInput.setToEqualDistance(chamferSize)
+            
+            chamfer = chamfers.add(chamferInput)
+
+            #define the edges anew after we have the new bod with chamfer
+            combinedTrunkEdges = trunkBody.edges
+            edges  = adsk.core.ObjectCollection.create()
+            edges.add(combinedTrunkEdges.item(1))
+            print(edges.count)
+
+            #fillet
+            fillets = rootComp.features.filletFeatures
+            
+            filletInput = fillets.createInput()
+            filletSize = adsk.core.ValueInput.createByReal(0.5*treeHeight)
+            filletInput.addConstantRadiusEdgeSet(edges, filletSize , False)
+            #filletInput.isRollingBallCorner(True)
+            
+            fillet = fillets.add(filletInput)
 
 
 
