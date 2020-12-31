@@ -33,7 +33,6 @@ def run(context):
 
         # Get the ADD-INS panel in the model workspace.
         addInsPanel = ui.allToolbarPanels.itemById('SolidCreatePanel')
-        
 
         # Add the button to the bottom of the panel.
         buttonControl = addInsPanel.controls.addCommand(buttonSample)
@@ -58,8 +57,6 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # Get the CommandInputs collection to create new command inputs.
         inputs = cmd.commandInputs
 
-
-
         # Create the value input to get the bbase size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Tree size', 5, 30, 1, 10)
@@ -72,8 +69,6 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # be 10 to 20 of whatever the current document unit is.
         app = adsk.core.Application.get()
         des = adsk.fusion.Design.cast(app.activeProduct)
-
-
 
         minVal = des.unitsManager.convert(
             10, des.unitsManager.defaultLengthUnits, 'mm')
@@ -146,7 +141,6 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         print("base size")
         print(baseSize)
 
-
         donutMinThickness = inputs.itemById('thickness').valueOne
         donutMaxThickness = inputs.itemById('thickness').valueTwo
         print("donutMinThickness")
@@ -162,7 +156,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         treetopsMax = inputs.itemById('treetops').valueTwo
         print("got all values and treetops leaves")
 
-        #assign values to random values based on either base size or selected ranges if high customizability is desired
+        # assign values to random values based on either base size or selected ranges if high customizability is desired
         if hasHighCustomizability:
             donutThickness = random.randint(
                 donutMinThickness, donutMaxThickness)
@@ -200,24 +194,21 @@ def stop(context):
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-
-
-
 # Event handler for the inputChanged event.
 class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
     def __init__(self):
         super().__init__()
+
     def notify(self, args):
         eventArgs = adsk.core.InputChangedEventArgs.cast(args)
-        
+
         # Check the value of the check box.
         changedInput = eventArgs.input
         if changedInput.id == 'highCustomizability':
             inputs = eventArgs.firingEvent.sender.commandInputs
             scaleInput = inputs.itemById('heightScale')
-			
 
-            #get all inputs
+            # get all inputs
             thicknessInput = inputs.itemById('thickness')
             heightInput = inputs.itemById('height')
             treetopInput = inputs.itemById('treetops')
@@ -233,13 +224,11 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
                 treetopInput.isVisible = False
 
 
-
-
 # This method contains the actual code to create the tree
 # arguments
 # donutThickness radius of the rings
-#treeHeight height of the tree
-#leavesRadius radius of the treetop
+# treeHeight height of the tree
+# leavesRadius radius of the treetop
 def createDonuts(donutThickness, treeHeight, leavesRadius):
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -288,7 +277,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # Call an add method on the collection to create a new circle.
             circle = circles.addByCenterRadius(
                 adsk.core.Point3D.create(5*i, 0, 0), donutThickness)
-            
+
             # Call an add method on the collection to create a new line.
             axis = lines.addByTwoPoints(adsk.core.Point3D.create(
                 5*i-1, -4, 0), adsk.core.Point3D.create(5*i+1, -4, 0))
@@ -303,7 +292,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             extInput = extrudes.createInput(
                 prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
-            #extrude the cirlce by treeheight amount
+            # extrude the cirlce by treeheight amount
 
             dist = adsk.core.ValueInput.createByReal(treeHeight)
             extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
@@ -333,7 +322,6 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # just get the current trunk that we just extruded
             trunkBody = ext.bodies.item(i)
 
-
             # Create a copy of the existing appearance.
             newAppear = design.appearances.addByCopy(
                 yellowAppear, 'Color ' + str(i+1))
@@ -350,37 +338,29 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # and color the body with this new material
             trunkBody.appearance = newAppear
 
-
-    
-            #add the base for the trunk
+            # add the base for the trunk
             trunkBaseSketch = sketches.add(xyPlane)
 
             # Get the SketchCircles collection from an existing sketch.
             trunkBaseCircles = trunkBaseSketch.sketchCurves.sketchCircles
 
-            #circle on sketch
+            # circle on sketch
             trunkBase = trunkBaseCircles.addByCenterRadius(
                 adsk.core.Point3D.create(5*i, 0, 0), 2*donutThickness)
-            #get profile
+            # get profile
             trunkBaseProf = trunkBaseSketch.profiles.item(i)
-            #create input object
+            # create input object
             trunkBaseExtInput = extrudes.createInput(
                 trunkBaseProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-            #extrude the cirlce by treeheight amount
+            # extrude the cirlce by treeheight amount
             trunkBaseDist = adsk.core.ValueInput.createByReal(1)
             trunkBaseExtInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
                 trunkBaseDist), adsk.fusion.ExtentDirections.NegativeExtentDirection)
             trunkBaseExtInput.isSolid = True
-            #add body
+            # add body
             trunkBaseExt = extrudes.add(trunkBaseExtInput)
-            #get body
+            # get body
             trunkBaseBody = trunkBaseExt.bodies.item(i)
-
-
-
-
-
-
 
             # Get one face and edge of the extrusion body
             #face = extrudes.endFaces.item(0)
@@ -434,7 +414,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             baseFeat = baseFeats.add()
 
             # adds the sphere. we lose reference to the cylinder though it seems. at least in the UI
-            #reference was lost because of the edit state. once its done we see the cylinder again
+            # reference was lost because of the edit state. once its done we see the cylinder again
 
             baseFeat.startEdit()
 
@@ -458,7 +438,6 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # get the current sphere to color
             leavestocolor = body
 
-
             # and color the sphere with this new material
             print("body object type is")
             print(body.objectType)
@@ -467,68 +446,57 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
             baseFeat.finishEdit()
 
-
-
-
-
-            #combine trunk and trunkbase
+            # combine trunk and trunkbase
             TargetBody = trunkBody
-
 
             ToolBodies = adsk.core.ObjectCollection.create()
             ToolBodies.add(trunkBaseBody)
-            
+
             print("ToolBodies.objectType")
             print(ToolBodies.objectType)
 
-            CombineCutInput = rootComp.features.combineFeatures.createInput(TargetBody, ToolBodies )
-            
-            CombineCutFeats = rootComp.features.combineFeatures
-            CombineCutInput = CombineCutFeats.createInput(TargetBody, ToolBodies)
-            CombineCutFeats.add(CombineCutInput)
+            CombineCutInput = rootComp.features.combineFeatures.createInput(
+                TargetBody, ToolBodies)
 
+            CombineCutFeats = rootComp.features.combineFeatures
+            CombineCutInput = CombineCutFeats.createInput(
+                TargetBody, ToolBodies)
+            CombineCutFeats.add(CombineCutInput)
 
             combinedTrunkEdges = trunkBody.edges
             print("combined edges")
             print(combinedTrunkEdges.count)
             print(combinedTrunkEdges.objectType)
 
-
-
-
-
             chamferSize = adsk.core.ValueInput.createByReal(0.6*donutThickness)
-            #chamfersample
-            #prepare chamfer
+            # chamfersample
+            # prepare chamfer
             #faces = sweep.faces
-            edges  = adsk.core.ObjectCollection.create()
+            edges = adsk.core.ObjectCollection.create()
             edges.add(combinedTrunkEdges.item(1))
-                
+
             chamfers = rootComp.features.chamferFeatures
-            
-            chamferInput = chamfers.createInput(edges,False)
+
+            chamferInput = chamfers.createInput(edges, False)
             chamferInput.setToEqualDistance(chamferSize)
-            
+
             chamfer = chamfers.add(chamferInput)
 
-            #define the edges anew after we have the new bod with chamfer
+            # define the edges anew after we have the new bod with chamfer
             combinedTrunkEdges = trunkBody.edges
-            edges  = adsk.core.ObjectCollection.create()
+            edges = adsk.core.ObjectCollection.create()
             edges.add(combinedTrunkEdges.item(1))
             print(edges.count)
 
-            #fillet
+            # fillet
             fillets = rootComp.features.filletFeatures
-            
+
             filletInput = fillets.createInput()
             filletSize = adsk.core.ValueInput.createByReal(0.5*treeHeight)
-            filletInput.addConstantRadiusEdgeSet(edges, filletSize , False)
-            #filletInput.isRollingBallCorner(True)
-            
+            filletInput.addConstantRadiusEdgeSet(edges, filletSize, False)
+            # filletInput.isRollingBallCorner(True)
+
             fillet = fillets.add(filletInput)
-
-
-
 
             i = i+1
 
