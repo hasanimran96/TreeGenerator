@@ -40,6 +40,10 @@ def run(context):
         # Make the button available in the panel.
         buttonControl.isPromotedByDefault = True
         buttonControl.isPromoted = True
+
+        # prevent this module from being terminate when the script returns
+        # because we are waiting for event handlers to fire
+        adsk.autoTerminate(False)
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
@@ -173,6 +177,11 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
 
         # call the method to create the tree
         createDonuts(donutThickness, treeHeight, leavesRadius)
+
+        # ui.messageBox('function createDonuts is completed')
+
+        # call mouseClick method
+        # mouseClick()
 
 
 def stop(context):
@@ -500,12 +509,38 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
             i = i+1
 
-            # in the end combine objects to one
-            # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
-            # close program and start again. does fusion keep the material names that we created last time or does it store them internally
-            # to create unique handle if needed: combination of all random values
-            # hasan: color to body itself
-            # simon: randomize integration with ui
+        # in the end combine objects to one
+        # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
+        # close program and start again. does fusion keep the material names that we created last time or does it store them internally
+        # to create unique handle if needed: combination of all random values
+        # hasan: color to body itself
+        # simon: randomize integration with ui
+
+    except:
+        if ui:
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+def mouseClick():
+    ui = None
+    try:
+        app = adsk.core.Application.get()
+        ui = app.userInterface
+
+        # click
+        msg = 'Click on the surface'
+        sel = ui.selectEntity(msg, 'Faces')
+        if sel is None:
+            ui.messageBox('no face selected')
+        else:
+            clickPoint = sel.point
+
+            # sketch
+            root = adsk.fusion.Component.cast(app.activeProduct.rootComponent)
+            skt = root.sketches.add(root.xYConstructionPlane)
+            skt.sketchPoints.add(clickPoint)
+
+        ui.messageBox('done')
 
     except:
         if ui:
