@@ -181,7 +181,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         # ui.messageBox('function createDonuts is completed')
 
         # call mouseClick method
-        # mouseClick()
+        #mouseClick()
 
 
 def stop(context):
@@ -603,7 +603,7 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
                 extInput.isSolid = True
 
                 # Create a start extent that starts from a brep face with an offset of 10 mm.
-                abstand = adsk.core.ValueInput.createByReal(branchWidth)
+                abstand = adsk.core.ValueInput.createByReal(branchWidth*5)
                 start_from = adsk.fusion.FromEntityStartDefinition.create(face, abstand)
                 extInput.startExtent = start_from
 
@@ -653,9 +653,15 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
                 loftFeats = rootComp.features.loftFeatures
                 loftInput = loftFeats.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
                 loftSectionsObj = loftInput.loftSections
-                section1 = loftSectionsObj.add(face)
-                
-                section2 = loftSectionsObj.add(branchbody.faces.item(2))
+
+                path1 = adsk.fusion.Path.create(face.edges.item(0), adsk.fusion.ChainedCurveOptions.noChainedCurves)
+                section1 = loftSectionsObj.add(path1)
+                section1.setTangentEndCondition(adsk.core.ValueInput.createByReal(1.0))
+
+                #section2 = loftSectionsObj.add(branchbody.faces.item(2))
+                path2 = adsk.fusion.Path.create(branchbody.edges.item(1), adsk.fusion.ChainedCurveOptions.noChainedCurves)
+                section2 = loftSectionsObj.add(path2)
+                section2.setTangentEndCondition(adsk.core.ValueInput.createByReal(1.0))
                 
                 loftInput.isSolid = True
 
