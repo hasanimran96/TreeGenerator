@@ -509,6 +509,8 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
             i = i+1
 
+        recursiveBranching(sk, face, donutThickness*0.6 , 4)
+
         # in the end combine objects to one
         # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
         # close program and start again. does fusion keep the material names that we created last time or does it store them internally
@@ -519,6 +521,14 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+
+
+
+
+
+
 
 
 def mouseClick():
@@ -541,6 +551,121 @@ def mouseClick():
             skt.sketchPoints.add(clickPoint)
 
         ui.messageBox('done')
+
+    except:
+        if ui:
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+
+def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
+    app = adsk.core.Application.get()
+    ui = app.userInterface
+    #ui.messageBox('in createDonuts')
+        
+    try:
+        # get the design  //selfmade
+        design = adsk.fusion.Design.cast(app.activeProduct)
+        if not design:
+            ui.messageBox('No active Fusion 360 design', 'No Design')
+            return
+        else:
+            if depth == 0:
+                exit
+            else:
+                # Get the root component of the active design.
+                rootComp = design.rootComponent
+
+                # Get the SketchCircles collection from an existing sketch.
+                circles = sketchToBuildOn.sketchCurves.sketchCircles
+
+                # Get the ExtrudeFeatures collection.
+                extrudes = rootComp.features.extrudeFeatures
+
+                # Call an add method on the collection to create a new circle.
+                circle = circles.addByCenterRadius(
+                    face.centroid, branchWidth)
+
+                # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
+                prof = sketchToBuildOn.profiles.item(1)
+
+                # Create a extrude input object that defines the input for a extrude feature.
+                # When creating the input object, required settings are provided as arguments.
+                #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+                # NEW
+                extInput = extrudes.createInput(
+                    prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+
+                # extrude the cirlce by treeheight amount
+                dist = adsk.core.ValueInput.createByReal(branchWidth)
+                extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+                    dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
+                extInput.isSolid = True
+
+                # Create a start extent that starts from a brep face with an offset of 10 mm.
+                abstand = adsk.core.ValueInput.createByReal(branchWidth)
+                start_from = adsk.fusion.FromEntityStartDefinition.create(face, abstand)
+                extInput.startExtent = start_from
+
+                # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
+                ext = extrudes.add(extInput)
+                        
+                # just get the current brach that we just extruded 
+                branchbody = ext.bodies.item(0)
+                print("in recursion branchbody objecttype")
+                print(branchbody.objectType)
+
+                # Create a collection of entities for move
+                bodies = adsk.core.ObjectCollection.create()
+                bodies.add(branchbody)
+                    
+                # Create a transform to do move
+                vector = adsk.core.Vector3D.create(0.0, 10.0, 0.0)
+                transform = adsk.core.Matrix3D.create()
+                transform.translation = vector
+
+
+
+                # Create a transform to do move
+                #fromVector = adsk.core.Vector3D.create(0.0, 00.0, 1.0)
+                #toVector = adsk.core.Vector3D.create(1.0, 1.0, 1.0)
+                #transform = adsk.core.Matrix3D.create()
+                #transform.setWithCoordinateSystem(face.centroid, xAxis, yAxis, zAxis)
+                #transform.setToRotation(0.25,, face.centroid) 
+
+                # Create a move feature
+                moveFeats = rootComp.features.moveFeatures
+                moveFeatureInput = moveFeats.createInput(bodies, transform)
+                moveFeats.add(moveFeatureInput)
+
+                # just get the current brach that we just moved 
+                #branchbody = moveFeats.bodies.item(0)
+                #print("in recursion branchbody objecttype")
+                #print(branchbody.objectType)
+
+
+                #create face and sketch for next iteration
+                topFace = branchbody.faces.item(1)
+                print(topFace.objectType)
+                newSketch = rootComp.sketches.add(topFace)
+
+                # Create loft feature input
+                loftFeats = rootComp.features.loftFeatures
+                loftInput = loftFeats.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+                loftSectionsObj = loftInput.loftSections
+                section1 = loftSectionsObj.add(face)
+                
+                section2 = loftSectionsObj.add(branchbody.faces.item(2))
+                
+                loftInput.isSolid = True
+
+                # Create loft feature
+                loftFeats.add(loftInput)
+
+
+                #call recusrively 
+                recursiveBranching(newSketch, topFace, branchWidth*0.6, depth-1)
+    
 
     except:
         if ui:
