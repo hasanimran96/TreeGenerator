@@ -126,6 +126,17 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # Get the CommandInputs collection to create new command inputs.
         # inputs = cmd.commandInputs
 
+        #get the position to place the tree
+        #selInput = inputs.addSelectionInput(selectionInputId, 'Selection', 'Select one')
+        #selInput.addSelectionFilter('PlanarFaces')
+        #selInput.addSelectionFilter('ConstructionPlanes')
+
+        # Create a selection input.
+        selectionInput = inputs.addSelectionInput('surfaceInput', 'Select', 'Basic select command input')
+        selectionInput.setSelectionLimits(1,1)
+        selectionInput.addSelectionFilter('Faces')
+        #selectionInput.addSelectionFilter('ConstructionPlanes')
+
         # Create the value input to get the bbase size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Tree size', 5, 30, 1, 10)
@@ -203,6 +214,11 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
 
         # Get the values from the command inputs.
         inputs = eventArgs.command.commandInputs
+
+        #GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
+        print('vor dem input getten')
+        #flache = input.itemById('surfaceInput').selection(0)
+        #print('nach dem input getten')
 
         hasHighCustomizability = inputs.itemById('highCustomizability').value
 
@@ -674,7 +690,52 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
             i = i+1
 
-        recursiveBranching(sk, face, donutThickness*0.6, 4)
+
+
+
+        # Create a transform to do move
+        vector = adsk.core.Vector3D.create(0.0, 10.0, 0.0)
+        transform = adsk.core.Matrix3D.create()
+        transform.translation = vector
+
+        recursiveBranching(sk, face, donutThickness*0.6 , transform, 4)
+
+        # Create a transform to do move
+        vector = adsk.core.Vector3D.create(0.0, -10.0, 0.0)
+        transform = adsk.core.Matrix3D.create()
+        transform.translation = vector
+
+        recursiveBranching(sk, face, donutThickness*0.6 , transform, 4)
+
+
+        # Create a transform to do move
+        vector = adsk.core.Vector3D.create(10.0, 0.0, 0.0)
+        transform = adsk.core.Matrix3D.create()
+        transform.translation = vector
+
+        recursiveBranching(sk, face, donutThickness*0.6 , transform, 4)
+
+
+
+        # Create a transform to do move
+        vector = adsk.core.Vector3D.create(-10.0, 0.0, 0.0)
+        transform = adsk.core.Matrix3D.create()
+        transform.translation = vector
+
+
+
+        # Create a transform to do move
+        fromVector = adsk.core.Vector3D.create(0.0, 00.0, 10.0)
+        toVector = adsk.core.Vector3D.create(1.0, 1.0, 10.0)
+        transform = adsk.core.Matrix3D.create()
+        #transform.setWithCoordinateSystem(face.centroid, xAxis, yAxis, zAxis)
+        transform.setToRotateTo(fromVector, toVector) 
+
+        recursiveBranching(sk, face, donutThickness*0.6 , transform, 4)
+
+
+
+
 
         # in the end combine objects to one
         # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
@@ -714,7 +775,8 @@ def mouseClick():
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
+
+def recursiveBranching(sketchToBuildOn, face,  branchWidth, transform, depth):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -775,11 +837,8 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
                 # Create a collection of entities for move
                 bodies = adsk.core.ObjectCollection.create()
                 bodies.add(branchbody)
+                    
 
-                # Create a transform to do move
-                vector = adsk.core.Vector3D.create(0.0, 10.0, 0.0)
-                transform = adsk.core.Matrix3D.create()
-                transform.translation = vector
 
                 # Create a transform to do move
                 #fromVector = adsk.core.Vector3D.create(0.0, 00.0, 1.0)
@@ -827,9 +886,10 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
                 # Create loft feature
                 loftFeats.add(loftInput)
 
-                # call recusrively
-                recursiveBranching(newSketch, topFace,
-                                   branchWidth*0.6, depth-1)
+
+                #call recusrively 
+                recursiveBranching(newSketch, topFace, branchWidth*0.6, transform, depth-1)
+    
 
     except:
         if ui:
