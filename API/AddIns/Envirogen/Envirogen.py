@@ -5,9 +5,11 @@ import traceback
 import math
 import random
 
+ui = adsk.core.UserInterface.cast(None)
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
 handlers = []
+selectedEdges = []
 
 
 def run(context):
@@ -49,17 +51,80 @@ def run(context):
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
+def stop(context):
+    try:
+        app = adsk.core.Application.get()
+        ui = app.userInterface
+
+        # Clean up the UI.
+        cmdDef = ui.commandDefinitions.itemById('NewButtonDefIdPython')
+        if cmdDef:
+            cmdDef.deleteMe()
+
+        addinsPanel = ui.allToolbarPanels.itemById('SolidCreatePanel')
+        cntrl = addinsPanel.controls.itemById('NewButtonDefIdPython')
+        if cntrl:
+            cntrl.deleteMe()
+    except:
+        if ui:
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
 # Event handler for the commandCreated event.
 class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(self):
         super().__init__()
 
     def notify(self, args):
+
+        #------------------------------------------------------#
+
+        cmd = args.command
+        cmd.isExecutedWhenPreEmpted = False
+        inputs = cmd.commandInputs
+
+        selectInput = inputs.addSelectionInput(
+            'SelectionEventsSample', 'Edges', 'Please select edges')
+        selectInput.addSelectionFilter(
+            adsk.core.SelectionCommandInput.Edges)
+        selectInput.setSelectionLimits(1)
+
+        # Connect to the command related events.
+        onExecutePreview = MyCommandExecutePreviewHandler()
+        cmd.executePreview.add(onExecutePreview)
+        handlers.append(onExecutePreview)
+
+        onDestroy = MyCommandDestroyHandler()
+        cmd.destroy.add(onDestroy)
+        handlers.append(onDestroy)
+
+        onPreSelect = MyPreSelectHandler()
+        cmd.preSelect.add(onPreSelect)
+        handlers.append(onPreSelect)
+
+        onPreSelectMouseMove = MyPreSelectMouseMoveHandler()
+        cmd.preSelectMouseMove.add(onPreSelectMouseMove)
+        handlers.append(onPreSelectMouseMove)
+
+        onPreSelectEnd = MyPreSelectEndHandler()
+        cmd.preSelectEnd.add(onPreSelectEnd)
+        handlers.append(onPreSelectEnd)
+
+        onSelect = MySelectHandler()
+        cmd.select.add(onSelect)
+        handlers.append(onSelect)
+
+        onUnSelect = MyUnSelectHandler()
+        cmd.unselect.add(onUnSelect)
+        handlers.append(onUnSelect)
+
+        #------------------------------------------------------#
+
         eventArgs = adsk.core.CommandCreatedEventArgs.cast(args)
-        cmd = eventArgs.command
+        cmdEvent = eventArgs.command
 
         # Get the CommandInputs collection to create new command inputs.
-        inputs = cmd.commandInputs
+        # inputs = cmd.commandInputs
 
         # Create the value input to get the bbase size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
@@ -114,12 +179,12 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
         # Connect to the execute event.
         onExecute = SampleCommandExecuteHandler()
-        cmd.execute.add(onExecute)
+        cmdEvent.execute.add(onExecute)
         handlers.append(onExecute)
 
         # Connect to the inputChanged event.
         onInputChanged = SampleCommandInputChangedHandler()
-        cmd.inputChanged.add(onInputChanged)
+        cmdEvent.inputChanged.add(onInputChanged)
         handlers.append(onInputChanged)
 
 
@@ -181,26 +246,126 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         # ui.messageBox('function createDonuts is completed')
 
         # call mouseClick method
-        #mouseClick()
+        # mouseClick()
 
 
-def stop(context):
-    try:
-        app = adsk.core.Application.get()
-        ui = app.userInterface
+class MyCommandExecutePreviewHandler(adsk.core.CommandEventHandler):
+    def __init__(self):
+        super().__init__()
 
-        # Clean up the UI.
-        cmdDef = ui.commandDefinitions.itemById('NewButtonDefIdPython')
-        if cmdDef:
-            cmdDef.deleteMe()
+    def notify(self, args):
+        try:
+            app = adsk.core.Application.get()
+            design = adsk.fusion.Design.cast(app.activeProduct)
+            if design:
+                cggroup = design.rootComponent.customGraphicsGroups.add()
+                for i in range(0, len(selectedEdges)):
+                    edge = adsk.fusion.BRepEdge.cast(selectedEdges[i])
+                    transform = adsk.core.Matrix3D.create()
+                    transform.translation = edge.pointOnEdge.asVector()
+                    cgtext = cggroup.addText(
+                        str(i+1), 'Arial Black', 1, transform)
+                    cgtext.color = adsk.fusion.CustomGraphicsSolidColorEffect.create(
+                        adsk.core.Color.create(0, 255, 0, 255))
+        except:
+            if ui:
+                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
-        addinsPanel = ui.allToolbarPanels.itemById('SolidCreatePanel')
-        cntrl = addinsPanel.controls.itemById('NewButtonDefIdPython')
-        if cntrl:
-            cntrl.deleteMe()
-    except:
-        if ui:
-            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+class MyCommandDestroyHandler(adsk.core.CommandEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args):
+        try:
+            # when the command is done, terminate the script
+            # this will release all globals which will remove all event handlers
+            adsk.terminate()
+        except:
+            if ui:
+                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+class MyPreSelectHandler(adsk.core.SelectionEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args):
+        try:
+            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
+            if selectedEdge:
+                args.additionalEntities = selectedEdge.tangentiallyConnectedEdges
+        except:
+            if ui:
+                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+class MyPreSelectMouseMoveHandler(adsk.core.SelectionEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args):
+        try:
+            app = adsk.core.Application.get()
+            design = adsk.fusion.Design.cast(app.activeProduct)
+            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
+            if design and selectedEdge:
+                group = design.rootComponent.customGraphicsGroups.add()
+                group.id = str(selectedEdge.tempId)
+                cgcurve = group.addCurve(selectedEdge.geometry)
+                cgcurve.color = adsk.fusion.CustomGraphicsSolidColorEffect.create(
+                    adsk.core.Color.create(255, 0, 0, 255))
+                cgcurve.weight = 10
+        except:
+            if ui:
+                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+class MyPreSelectEndHandler(adsk.core.SelectionEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args):
+        try:
+            app = adsk.core.Application.get()
+            design = adsk.fusion.Design.cast(app.activeProduct)
+            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
+            if design and selectedEdge:
+                for group in design.rootComponent.customGraphicsGroups:
+                    if group.id == str(selectedEdge.tempId):
+                        group.deleteMe()
+                        break
+        except:
+            if ui:
+                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+class MySelectHandler(adsk.core.SelectionEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args):
+        try:
+            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
+            if selectedEdge:
+                selectedEdges.append(selectedEdge)
+        except:
+            if ui:
+                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
+
+
+class MyUnSelectHandler(adsk.core.SelectionEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def notify(self, args):
+        try:
+            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
+            if selectedEdge:
+                selectedEdges.remove(selectedEdge)
+        except:
+            if ui:
+                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
 # Event handler for the inputChanged event.
@@ -509,7 +674,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
             i = i+1
 
-        recursiveBranching(sk, face, donutThickness*0.6 , 4)
+        recursiveBranching(sk, face, donutThickness*0.6, 4)
 
         # in the end combine objects to one
         # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
@@ -521,14 +686,6 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-
-
-
-
-
-
 
 
 def mouseClick():
@@ -557,12 +714,11 @@ def mouseClick():
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-
 def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
-        
+
     try:
         # get the design  //selfmade
         design = adsk.fusion.Design.cast(app.activeProduct)
@@ -604,13 +760,14 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
 
                 # Create a start extent that starts from a brep face with an offset of 10 mm.
                 abstand = adsk.core.ValueInput.createByReal(branchWidth*5)
-                start_from = adsk.fusion.FromEntityStartDefinition.create(face, abstand)
+                start_from = adsk.fusion.FromEntityStartDefinition.create(
+                    face, abstand)
                 extInput.startExtent = start_from
 
                 # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
                 ext = extrudes.add(extInput)
-                        
-                # just get the current brach that we just extruded 
+
+                # just get the current brach that we just extruded
                 branchbody = ext.bodies.item(0)
                 print("in recursion branchbody objecttype")
                 print(branchbody.objectType)
@@ -618,60 +775,61 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, depth):
                 # Create a collection of entities for move
                 bodies = adsk.core.ObjectCollection.create()
                 bodies.add(branchbody)
-                    
+
                 # Create a transform to do move
                 vector = adsk.core.Vector3D.create(0.0, 10.0, 0.0)
                 transform = adsk.core.Matrix3D.create()
                 transform.translation = vector
-
-
 
                 # Create a transform to do move
                 #fromVector = adsk.core.Vector3D.create(0.0, 00.0, 1.0)
                 #toVector = adsk.core.Vector3D.create(1.0, 1.0, 1.0)
                 #transform = adsk.core.Matrix3D.create()
                 #transform.setWithCoordinateSystem(face.centroid, xAxis, yAxis, zAxis)
-                #transform.setToRotation(0.25,, face.centroid) 
+                # transform.setToRotation(0.25,, face.centroid)
 
                 # Create a move feature
                 moveFeats = rootComp.features.moveFeatures
                 moveFeatureInput = moveFeats.createInput(bodies, transform)
                 moveFeats.add(moveFeatureInput)
 
-                # just get the current brach that we just moved 
+                # just get the current brach that we just moved
                 #branchbody = moveFeats.bodies.item(0)
                 #print("in recursion branchbody objecttype")
-                #print(branchbody.objectType)
+                # print(branchbody.objectType)
 
-
-                #create face and sketch for next iteration
+                # create face and sketch for next iteration
                 topFace = branchbody.faces.item(1)
                 print(topFace.objectType)
                 newSketch = rootComp.sketches.add(topFace)
 
                 # Create loft feature input
                 loftFeats = rootComp.features.loftFeatures
-                loftInput = loftFeats.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+                loftInput = loftFeats.createInput(
+                    adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
                 loftSectionsObj = loftInput.loftSections
 
-                path1 = adsk.fusion.Path.create(face.edges.item(0), adsk.fusion.ChainedCurveOptions.noChainedCurves)
+                path1 = adsk.fusion.Path.create(face.edges.item(
+                    0), adsk.fusion.ChainedCurveOptions.noChainedCurves)
                 section1 = loftSectionsObj.add(path1)
-                section1.setTangentEndCondition(adsk.core.ValueInput.createByReal(1.0))
+                section1.setTangentEndCondition(
+                    adsk.core.ValueInput.createByReal(1.0))
 
                 #section2 = loftSectionsObj.add(branchbody.faces.item(2))
-                path2 = adsk.fusion.Path.create(branchbody.edges.item(1), adsk.fusion.ChainedCurveOptions.noChainedCurves)
+                path2 = adsk.fusion.Path.create(branchbody.edges.item(
+                    1), adsk.fusion.ChainedCurveOptions.noChainedCurves)
                 section2 = loftSectionsObj.add(path2)
-                section2.setTangentEndCondition(adsk.core.ValueInput.createByReal(1.0))
-                
+                section2.setTangentEndCondition(
+                    adsk.core.ValueInput.createByReal(1.0))
+
                 loftInput.isSolid = True
 
                 # Create loft feature
                 loftFeats.add(loftInput)
 
-
-                #call recusrively 
-                recursiveBranching(newSketch, topFace, branchWidth*0.6, depth-1)
-    
+                # call recusrively
+                recursiveBranching(newSketch, topFace,
+                                   branchWidth*0.6, depth-1)
 
     except:
         if ui:
