@@ -506,7 +506,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace):
         global forProgressTotal
         forProgressTotal = 4**(totalDepth+1)
 
-        branchFactor = 4
+        branchFactor = 0
 
         callSplit(face, donutThickness, axis, totalDepth, newAppear, branchFactor)
 
@@ -686,35 +686,79 @@ def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor):
             branchDecision = random.randint(3,5)
 
         if branchDecision == 3:
-            branchDecision = 3
+            thickFactor = random.uniform(0.5, 0.8)
+            #axis1 = random.uniform(0.7, 1.3)
+            axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
+            recursiveBranching(face, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+
+            thickFactor = random.uniform(0.5, 0.8)
+            #axis1 = random.uniform(0.7, 1.3)
+            axis = adsk.core.Vector3D.create(1.0, -0.577, 0.0)
+            recursiveBranching(face, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+
+            thickFactor = random.uniform(0.5, 0.8)
+            #axis1 = random.uniform(0.7, 1.3)
+            axis = adsk.core.Vector3D.create(-1, -0.577, 0.0)
+            recursiveBranching(face, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
         if branchDecision == 4:
-            thickFactor = random.uniform(0.4, 0.8)
+            thickFactor = random.uniform(0.5, 0.8)
             axis1 = random.uniform(0.7, 1.3)
             axis = adsk.core.Vector3D.create(axis1, 0.0, 0.0)
             recursiveBranching(face, branchWidth *
                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.4, 0.8)
+            thickFactor = random.uniform(0.5, 0.8)
             axis1 = random.uniform(0.7, 1.3)
             axis = adsk.core.Vector3D.create(0.0, axis1, 0.0)
             recursiveBranching(face, branchWidth *
                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.4, 0.8)
+            thickFactor = random.uniform(0.5, 0.8)
             axis1 = random.uniform(0.7, 1.3)
             axis = adsk.core.Vector3D.create(0.0, -axis1, 0.0)
             recursiveBranching(face, branchWidth *
                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.4, 0.8)
+            thickFactor = random.uniform(0.5, 0.8)
             axis1 = random.uniform(0.7, 1.3)
             axis = adsk.core.Vector3D.create(-axis1, 0.0, 0.0)
             recursiveBranching(face, branchWidth *
                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
         if branchDecision == 5:
-            branchDecision = 5
+            thickFactor = random.uniform(0.5, 0.8)
+            #axis1 = random.uniform(0.7, 1.3)
+            axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
+            recursiveBranching(face, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+
+            thickFactor = random.uniform(0.5, 0.8)
+            #axis1 = random.uniform(0.7, 1.3)
+            axis = adsk.core.Vector3D.create(1.0, 0.325, 0.0)
+            recursiveBranching(face, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+
+            thickFactor = random.uniform(0.5, 0.8)
+            #axis1 = random.uniform(0.7, 1.3)
+            axis = adsk.core.Vector3D.create(-1, 0.325, 0.0)
+            recursiveBranching(face, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+
+            thickFactor = random.uniform(0.5, 0.8)
+            #axis1 = random.uniform(0.7, 1.3)
+            axis = adsk.core.Vector3D.create(0.727, -1.0, 0.0)
+            recursiveBranching(face, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+
+            thickFactor = random.uniform(0.5, 0.8)
+            #axis1 = random.uniform(0.7, 1.3)
+            axis = adsk.core.Vector3D.create(-0.727, -1, 0.0)
+            recursiveBranching(face, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
 
     except:
