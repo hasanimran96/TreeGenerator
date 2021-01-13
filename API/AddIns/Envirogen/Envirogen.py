@@ -584,7 +584,6 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear):
                 # Create a extrude input object that defines the input for a extrude feature.
                 # When creating the input object, required settings are provided as arguments.
                 #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-                # NEW
                 extInput = extrudes.createInput(
                     prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
