@@ -501,10 +501,10 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace):
 
             i = i+1
 
-        totalDepth = 3
+        totalDepth = 4
 
         global forProgressTotal
-        forProgressTotal = 4**(totalDepth+1)
+        forProgressTotal = 4**(totalDepth)
 
         branchFactor = 0
 
@@ -537,133 +537,129 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
             # Get the root component of the active design.
             rootComp = design.rootComponent
 
-            if depth == 0:
 
-                leavSize = branchWidth*10
-                addLeaves(face, leavSize, yellowAppear)
-            else:
 
-                # Get the ExtrudeFeatures collection.
-                extrudes = rootComp.features.extrudeFeatures
+            # Get the ExtrudeFeatures collection.
+            extrudes = rootComp.features.extrudeFeatures
 
-                # create sketch on old face
-                #topFace = branchbody.faces.item(1)
-                oldFacesSketch = rootComp.sketches.add(face)
+            # create sketch on old face
+            #topFace = branchbody.faces.item(1)
+            oldFacesSketch = rootComp.sketches.add(face)
 
-                # Get the SketchCircles collection from an existing sketch.
-                circles = oldFacesSketch.sketchCurves.sketchCircles
+            # Get the SketchCircles collection from an existing sketch.
+            circles = oldFacesSketch.sketchCurves.sketchCircles
 
-                # Call an add method on the collection to create a new circle.
-                circle = circles.addByCenterRadius(
-                    oldFacesSketch.modelToSketchSpace(face.centroid), branchWidth)
-                # adsk.core.Point3D.create(0, 0, 0), branchWidth)
+            # Call an add method on the collection to create a new circle.
+            circle = circles.addByCenterRadius(
+                oldFacesSketch.modelToSketchSpace(face.centroid), branchWidth)
+            # adsk.core.Point3D.create(0, 0, 0), branchWidth)
 
-                # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
-                prof = oldFacesSketch.profiles.item(1)
+            # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
+            prof = oldFacesSketch.profiles.item(1)
 
-                # Create a extrude input object that defines the input for a extrude feature.
-                # When creating the input object, required settings are provided as arguments.
-                #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-                extInput = extrudes.createInput(
-                    prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            # Create a extrude input object that defines the input for a extrude feature.
+            # When creating the input object, required settings are provided as arguments.
+            #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            extInput = extrudes.createInput(
+                prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
-                # extrude the cirlce by treeheight amount
-                dist = adsk.core.ValueInput.createByReal(branchWidth*3)
-                extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
-                    dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
-                extInput.isSolid = True
+            # extrude the cirlce by treeheight amount
+            dist = adsk.core.ValueInput.createByReal(branchWidth*3)
+            extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+                dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
+            extInput.isSolid = True
 
-                # Create a start extent that starts from a brep face with an offset of 10 mm.
-                # CURRENTLY DOESNT ATT THE DISTANCE BECAUSE FOR SOME REASON THE CIRCLE ON THE SKETCH IS ALREADY SO FAR AWAY
-                abstand = adsk.core.ValueInput.createByReal(branchWidth*3)
-                start_from = adsk.fusion.FromEntityStartDefinition.create(
-                    face, abstand)
-                extInput.startExtent = start_from
+            # Create a start extent that starts from a brep face with an offset of 10 mm.
+            # CURRENTLY DOESNT ATT THE DISTANCE BECAUSE FOR SOME REASON THE CIRCLE ON THE SKETCH IS ALREADY SO FAR AWAY
+            abstand = adsk.core.ValueInput.createByReal(branchWidth*3)
+            start_from = adsk.fusion.FromEntityStartDefinition.create(
+                face, abstand)
+            extInput.startExtent = start_from
 
-                # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
-                ext = extrudes.add(extInput)
+            # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
+            ext = extrudes.add(extInput)
 
-                # just get the current brach that we just extruded
-                branchbody = ext.bodies.item(0)
-                #print("in recursion branchbody objecttype")
-                # print(branchbody.objectType)
+            # just get the current brach that we just extruded
+            branchbody = ext.bodies.item(0)
+            #print("in recursion branchbody objecttype")
+            # print(branchbody.objectType)
 
-                # color branch
-                branchbody.appearance = yellowAppear
+            # color branch
+            branchbody.appearance = yellowAppear
 
-                # Create a collection of entities for move
-                # OR IS IT HERE, IS OBJECTCOLLECTION GLOBAL?
-                bodies = adsk.core.ObjectCollection.create()
-                bodies.add(branchbody)
+            # Create a collection of entities for move
+            # OR IS IT HERE, IS OBJECTCOLLECTION GLOBAL?
+            bodies = adsk.core.ObjectCollection.create()
+            bodies.add(branchbody)
 
-                # Create a transform to do move
-                #fromVector = adsk.core.Vector3D.create(0.0, 00.0, 1.0)
-                #toVector = adsk.core.Vector3D.create(1.0, 1.0, 1.0)
-                transform = adsk.core.Matrix3D.create()
-                #yAxis = adsk.core.Vector3D.create(0.0,1.0,0.0)
-                #transform.setWithCoordinateSystem(face.centroid, xAxis, yAxis, zAxis)
+            # Create a transform to do move
+            #fromVector = adsk.core.Vector3D.create(0.0, 00.0, 1.0)
+            #toVector = adsk.core.Vector3D.create(1.0, 1.0, 1.0)
+            transform = adsk.core.Matrix3D.create()
+            #yAxis = adsk.core.Vector3D.create(0.0,1.0,0.0)
+            #transform.setWithCoordinateSystem(face.centroid, xAxis, yAxis, zAxis)
 
-                # ROTATION ANGLE CAN ALSO BE RANDOMIZED OR SHOULD MAYBE BE ADJUSTED ACCORDING TO HOW MANY DEPTH STEPS THERE WILL BE
-                branchAngle = random.uniform(0.5, 1.0)
-                transform.setToRotation(branchAngle, axis, face.centroid)
-                # transform.setToRotateTo(0.25,, face.centroid)
+            # ROTATION ANGLE CAN ALSO BE RANDOMIZED OR SHOULD MAYBE BE ADJUSTED ACCORDING TO HOW MANY DEPTH STEPS THERE WILL BE
+            branchAngle = random.uniform(0.5, 1.0)
+            transform.setToRotation(branchAngle, axis, face.centroid)
+            # transform.setToRotateTo(0.25,, face.centroid)
 
-                # Create a move feature
-                # moveFeats = adsk.fusion.MoveFeature.
-                moveFeats = rootComp.features.moveFeatures
-                moveFeatureInput = moveFeats.createInput(bodies, transform)
-                moveFeats.add(moveFeatureInput)
+            # Create a move feature
+            # moveFeats = adsk.fusion.MoveFeature.
+            moveFeats = rootComp.features.moveFeatures
+            moveFeatureInput = moveFeats.createInput(bodies, transform)
+            moveFeats.add(moveFeatureInput)
 
-                # just get the current brach that we just moved
-                #branchbody = moveFeats.bodies.item(0)
-                #print("in recursion branchbody objecttype")
-                # print(branchbody.objectType)
+            # just get the current brach that we just moved
+            #branchbody = moveFeats.bodies.item(0)
+            #print("in recursion branchbody objecttype")
+            # print(branchbody.objectType)
 
-                # create face and sketch for next iteration
-                # I THINK THIS IS WHERE THE RECURSION IS FAILING; THE TOPFACE IS ALWAYS THE SAME ITEM THEN
-                topFace = branchbody.faces.item(1)
-                #
-                # print(topFace.objectType)
-                #newSketch = rootComp.sketches.add(topFace)
+            # create face and sketch for next iteration
+            # I THINK THIS IS WHERE THE RECURSION IS FAILING; THE TOPFACE IS ALWAYS THE SAME ITEM THEN
+            topFace = branchbody.faces.item(1)
+            #
+            # print(topFace.objectType)
+            #newSketch = rootComp.sketches.add(topFace)
 
-                # Create loft feature input
-                loftFeats = rootComp.features.loftFeatures
-                loftInput = loftFeats.createInput(
-                    adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-                loftSectionsObj = loftInput.loftSections
+            # Create loft feature input
+            loftFeats = rootComp.features.loftFeatures
+            loftInput = loftFeats.createInput(
+                adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            loftSectionsObj = loftInput.loftSections
 
-                path1 = adsk.fusion.Path.create(face.edges.item(
-                    0), adsk.fusion.ChainedCurveOptions.noChainedCurves)
-                section1 = loftSectionsObj.add(path1)
-                section1.setTangentEndCondition(
-                    adsk.core.ValueInput.createByReal(1.0))
+            path1 = adsk.fusion.Path.create(face.edges.item(
+                0), adsk.fusion.ChainedCurveOptions.noChainedCurves)
+            section1 = loftSectionsObj.add(path1)
+            section1.setTangentEndCondition(
+                adsk.core.ValueInput.createByReal(1.0))
 
-                #section2 = loftSectionsObj.add(branchbody.faces.item(2))
-                path2 = adsk.fusion.Path.create(branchbody.edges.item(
-                    1), adsk.fusion.ChainedCurveOptions.noChainedCurves)
-                section2 = loftSectionsObj.add(path2)
-                section2.setTangentEndCondition(
-                    adsk.core.ValueInput.createByReal(1.0))
+            #section2 = loftSectionsObj.add(branchbody.faces.item(2))
+            path2 = adsk.fusion.Path.create(branchbody.edges.item(
+                1), adsk.fusion.ChainedCurveOptions.noChainedCurves)
+            section2 = loftSectionsObj.add(path2)
+            section2.setTangentEndCondition(
+                adsk.core.ValueInput.createByReal(1.0))
 
-                loftInput.isSolid = True
+            loftInput.isSolid = True
 
-                # Create loft feature
-                loftbodies = loftFeats.add(loftInput)
+            # Create loft feature
+            loftbodies = loftFeats.add(loftInput)
 
-                # color loft
-                loftbody = loftbodies.bodies.item(0)
-                loftbody.appearance = yellowAppear
+            # color loft
+            loftbody = loftbodies.bodies.item(0)
+            loftbody.appearance = yellowAppear
 
 
 
-                callSplit(topFace, branchWidth, axis, depth, yellowAppear, branchFactor)
+            callSplit(topFace, branchWidth, axis, depth, yellowAppear, branchFactor)
 
-                # print("Depth")
-                # print(depth)
-                # print("completed")
+            # print("Depth")
+            # print(depth)
+            # print("completed")
 
-                # call recusrively
-                #recursiveBranching(topFace, branchWidth*0.6, axis, depth-1, yellowAppear)
+            # call recusrively
+            #recursiveBranching(topFace, branchWidth*0.6, axis, depth-1, yellowAppear)
 
     except:
         if ui:
@@ -682,83 +678,88 @@ def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor):
     try:
         branchDecision = branchFactor
 
-        if branchFactor == 0:
-            branchDecision = random.randint(3,5)
+        if depth == 0:
+            leavSize = branchWidth*10
+            addLeaves(face, leavSize, yellowAppear)
+        else:        
 
-        if branchDecision == 3:
-            thickFactor = random.uniform(0.5, 0.8)
-            #axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+            if branchFactor == 0:
+                branchDecision = random.randint(3,5)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            #axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(1.0, -0.577, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+            if branchDecision == 3:
+                thickFactor = random.uniform(0.5, 0.8)
+                #axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            #axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(-1, -0.577, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                thickFactor = random.uniform(0.5, 0.8)
+                #axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(1.0, -0.577, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-        if branchDecision == 4:
-            thickFactor = random.uniform(0.5, 0.8)
-            axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(axis1, 0.0, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                thickFactor = random.uniform(0.5, 0.8)
+                #axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(-1, -0.577, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(0.0, axis1, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+            if branchDecision == 4:
+                thickFactor = random.uniform(0.5, 0.8)
+                axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(axis1, 0.0, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(0.0, -axis1, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                thickFactor = random.uniform(0.5, 0.8)
+                axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(0.0, axis1, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(-axis1, 0.0, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                thickFactor = random.uniform(0.5, 0.8)
+                axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(0.0, -axis1, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-        if branchDecision == 5:
-            thickFactor = random.uniform(0.5, 0.8)
-            #axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                thickFactor = random.uniform(0.5, 0.8)
+                axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(-axis1, 0.0, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            #axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(1.0, 0.325, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+            if branchDecision == 5:
+                thickFactor = random.uniform(0.5, 0.8)
+                #axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            #axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(-1, 0.325, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                thickFactor = random.uniform(0.5, 0.8)
+                #axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(1.0, 0.325, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            #axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(0.727, -1.0, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                thickFactor = random.uniform(0.5, 0.8)
+                #axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(-1, 0.325, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
-            thickFactor = random.uniform(0.5, 0.8)
-            #axis1 = random.uniform(0.7, 1.3)
-            axis = adsk.core.Vector3D.create(-0.727, -1, 0.0)
-            recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                thickFactor = random.uniform(0.5, 0.8)
+                #axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(0.727, -1.0, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
+
+                thickFactor = random.uniform(0.5, 0.8)
+                #axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(-0.727, -1, 0.0)
+                recursiveBranching(face, branchWidth *
+                                    thickFactor, axis, depth-1, yellowAppear, branchFactor)
 
 
     except:
