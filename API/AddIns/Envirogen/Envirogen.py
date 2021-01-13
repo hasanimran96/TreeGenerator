@@ -5,11 +5,11 @@ import traceback
 import math
 import random
 
-ui = adsk.core.UserInterface.cast(None)
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
 handlers = []
-selectedEdges = []
+progresscounter = 0
+forProgressTotal = 0
 
 
 def run(context):
@@ -76,66 +76,18 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         super().__init__()
 
     def notify(self, args):
-
-        #------------------------------------------------------#
-
-        cmd = args.command
-        cmd.isExecutedWhenPreEmpted = False
-        inputs = cmd.commandInputs
-
-        selectInput = inputs.addSelectionInput(
-            'SelectionEventsSample', 'Edges', 'Please select edges')
-        selectInput.addSelectionFilter(
-            adsk.core.SelectionCommandInput.Edges)
-        selectInput.setSelectionLimits(1)
-
-        # Connect to the command related events.
-        onExecutePreview = MyCommandExecutePreviewHandler()
-        cmd.executePreview.add(onExecutePreview)
-        handlers.append(onExecutePreview)
-
-        onDestroy = MyCommandDestroyHandler()
-        cmd.destroy.add(onDestroy)
-        handlers.append(onDestroy)
-
-        onPreSelect = MyPreSelectHandler()
-        cmd.preSelect.add(onPreSelect)
-        handlers.append(onPreSelect)
-
-        onPreSelectMouseMove = MyPreSelectMouseMoveHandler()
-        cmd.preSelectMouseMove.add(onPreSelectMouseMove)
-        handlers.append(onPreSelectMouseMove)
-
-        onPreSelectEnd = MyPreSelectEndHandler()
-        cmd.preSelectEnd.add(onPreSelectEnd)
-        handlers.append(onPreSelectEnd)
-
-        onSelect = MySelectHandler()
-        cmd.select.add(onSelect)
-        handlers.append(onSelect)
-
-        onUnSelect = MyUnSelectHandler()
-        cmd.unselect.add(onUnSelect)
-        handlers.append(onUnSelect)
-
-        #------------------------------------------------------#
-
         eventArgs = adsk.core.CommandCreatedEventArgs.cast(args)
-        cmdEvent = eventArgs.command
+        cmd = eventArgs.command
 
         # Get the CommandInputs collection to create new command inputs.
-        # inputs = cmd.commandInputs
-
-        #get the position to place the tree
-        #selInput = inputs.addSelectionInput(selectionInputId, 'Selection', 'Select one')
-        #selInput.addSelectionFilter('PlanarFaces')
-        #selInput.addSelectionFilter('ConstructionPlanes')
+        inputs = cmd.commandInputs
 
         # Create a selection input.
-        selectionInput = inputs.addSelectionInput('surfaceInput', 'Select', 'Basic select command input')
-        selectionInput.setSelectionLimits(1,1)
+        selectionInput = inputs.addSelectionInput(
+            'surfaceInput', 'Select', 'Basic select command input')
+        selectionInput.setSelectionLimits(0, 1)
         selectionInput.addSelectionFilter('Faces')
-        #selectionInput.addSelectionFilter('ConstructionPlanes')
+        # selectionInput.addSelectionFilter('ConstructionPlanes')
 
         # Create the value input to get the bbase size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
@@ -190,12 +142,12 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
         # Connect to the execute event.
         onExecute = SampleCommandExecuteHandler()
-        cmdEvent.execute.add(onExecute)
+        cmd.execute.add(onExecute)
         handlers.append(onExecute)
 
         # Connect to the inputChanged event.
         onInputChanged = SampleCommandInputChangedHandler()
-        cmdEvent.inputChanged.add(onInputChanged)
+        cmd.inputChanged.add(onInputChanged)
         handlers.append(onInputChanged)
 
 
@@ -214,11 +166,6 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
 
         # Get the values from the command inputs.
         inputs = eventArgs.command.commandInputs
-
-        #GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
-        print('vor dem input getten')
-        #flache = input.itemById('surfaceInput').selection(0)
-        #print('nach dem input getten')
 
         hasHighCustomizability = inputs.itemById('highCustomizability').value
 
@@ -241,6 +188,20 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         treetopsMax = inputs.itemById('treetops').valueTwo
         print("got all values and treetops leaves")
 
+        # GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
+       # selectedSurfaceInput = inputs.itemById('surfaceInput')
+        # next line is okay, debugging shows that the count is 1 as expected. don't know why next line code stops
+       # if selectedSurface.selectionCount == 0:
+       #     selectedSurface = selectedSurfaceInput.selection(0).entity
+        #flache = input.itemById('surfaceInput').selection(0)
+        #print('nach dem input getten')
+
+        forselectioninputs = eventArgs.firingEvent.sender.commandInputs
+        selectionInput = forselectioninputs.itemById('surfaceInput')
+
+        # (selectionInput.selection(0).entity.objectType)
+        selectedBRepFace = selectionInput.selection(0).entity
+
         # assign values to random values based on either base size or selected ranges if high customizability is desired
         if hasHighCustomizability:
             donutThickness = random.randint(
@@ -257,131 +218,13 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
             leavesRadius = baseSize*5 + random.randint(0, baseSize)
 
         # call the method to create the tree
-        createDonuts(donutThickness, treeHeight, leavesRadius)
+        createDonuts(donutThickness, treeHeight,
+                     leavesRadius, selectedBRepFace)
 
         # ui.messageBox('function createDonuts is completed')
 
         # call mouseClick method
         # mouseClick()
-
-
-class MyCommandExecutePreviewHandler(adsk.core.CommandEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        try:
-            app = adsk.core.Application.get()
-            design = adsk.fusion.Design.cast(app.activeProduct)
-            if design:
-                cggroup = design.rootComponent.customGraphicsGroups.add()
-                for i in range(0, len(selectedEdges)):
-                    edge = adsk.fusion.BRepEdge.cast(selectedEdges[i])
-                    transform = adsk.core.Matrix3D.create()
-                    transform.translation = edge.pointOnEdge.asVector()
-                    cgtext = cggroup.addText(
-                        str(i+1), 'Arial Black', 1, transform)
-                    cgtext.color = adsk.fusion.CustomGraphicsSolidColorEffect.create(
-                        adsk.core.Color.create(0, 255, 0, 255))
-        except:
-            if ui:
-                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-class MyCommandDestroyHandler(adsk.core.CommandEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        try:
-            # when the command is done, terminate the script
-            # this will release all globals which will remove all event handlers
-            adsk.terminate()
-        except:
-            if ui:
-                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-class MyPreSelectHandler(adsk.core.SelectionEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        try:
-            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
-            if selectedEdge:
-                args.additionalEntities = selectedEdge.tangentiallyConnectedEdges
-        except:
-            if ui:
-                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-class MyPreSelectMouseMoveHandler(adsk.core.SelectionEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        try:
-            app = adsk.core.Application.get()
-            design = adsk.fusion.Design.cast(app.activeProduct)
-            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
-            if design and selectedEdge:
-                group = design.rootComponent.customGraphicsGroups.add()
-                group.id = str(selectedEdge.tempId)
-                cgcurve = group.addCurve(selectedEdge.geometry)
-                cgcurve.color = adsk.fusion.CustomGraphicsSolidColorEffect.create(
-                    adsk.core.Color.create(255, 0, 0, 255))
-                cgcurve.weight = 10
-        except:
-            if ui:
-                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-class MyPreSelectEndHandler(adsk.core.SelectionEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        try:
-            app = adsk.core.Application.get()
-            design = adsk.fusion.Design.cast(app.activeProduct)
-            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
-            if design and selectedEdge:
-                for group in design.rootComponent.customGraphicsGroups:
-                    if group.id == str(selectedEdge.tempId):
-                        group.deleteMe()
-                        break
-        except:
-            if ui:
-                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-class MySelectHandler(adsk.core.SelectionEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        try:
-            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
-            if selectedEdge:
-                selectedEdges.append(selectedEdge)
-        except:
-            if ui:
-                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-class MyUnSelectHandler(adsk.core.SelectionEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args):
-        try:
-            selectedEdge = adsk.fusion.BRepEdge.cast(args.selection.entity)
-            if selectedEdge:
-                selectedEdges.remove(selectedEdge)
-        except:
-            if ui:
-                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
 # Event handler for the inputChanged event.
@@ -413,16 +256,25 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
                 heightInput.isVisible = False
                 treetopInput.isVisible = False
 
+        # for some reason acessing it from here works, but not from the execute command handler or the createDOnuts (if you save it here into a global variable)
+        if changedInput.id == 'surfaceInput':
+            inputs = eventArgs.firingEvent.sender.commandInputs
+            selectionInput = inputs.itemById('surfaceInput')
+
+            print(selectionInput.selection(0).entity.objectType)
+            selectedBRepFace = selectionInput.selection(0).entity.objectType
+
 
 # This method contains the actual code to create the tree
 # arguments
 # donutThickness radius of the rings
 # treeHeight height of the tree
 # leavesRadius radius of the treetop
-def createDonuts(donutThickness, treeHeight, leavesRadius):
+def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
+
     try:
         # get the design  //selfmade
         design = adsk.fusion.Design.cast(app.activeProduct)
@@ -463,10 +315,13 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
         i = 0
         while i <= (0):
 
+            pointForTreestart = selectedBRepFace.centroid
+
             # new tree
             # Call an add method on the collection to create a new circle.
             circle = circles.addByCenterRadius(
-                adsk.core.Point3D.create(5*i, 0, 0), donutThickness)
+                # adsk.core.Point3D.create(5*i, 0, 0), donutThickness)
+                pointForTreestart, donutThickness)
 
             # Call an add method on the collection to create a new line.
             axis = lines.addByTwoPoints(adsk.core.Point3D.create(
@@ -536,7 +391,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
             # circle on sketch
             trunkBase = trunkBaseCircles.addByCenterRadius(
-                adsk.core.Point3D.create(5*i, 0, 0), 2*donutThickness)
+                pointForTreestart, 2*donutThickness)
             # get profile
             trunkBaseProf = trunkBaseSketch.profiles.item(i)
             # create input object
@@ -563,13 +418,13 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             # has no endfaces
             # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead ::: face = ext.faces.item(1) :::this worked
             face = ext.endFaces.item(0)
-            print("ext")
-            print(face.objectType)
-            print(face.area)
-            print(face.geometry)
-            print(face.evaluator)
-            print(face.body)
-            print(face.attributes)
+            # print("ext")
+            # print(face.objectType)
+            # print(face.area)
+            # print(face.geometry)
+            # print(face.evaluator)
+            # print(face.body)
+            # print(face.attributes)
             #edge = face.edges.item(0)
 
             # Create a slant construction plane with an angle of 45 deg on the xZConstructionPlane
@@ -592,58 +447,14 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             sk = rootComp.sketches.add(face)
             #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
 
-            # prepares the sphere, using only the centerpoint of the surface though.
-            bodies = rootComp.bRepBodies
-            # maybe possible with permanent?
-            tBrep = adsk.fusion.TemporaryBRepManager.get()
-            centerPoint = face.centroid
-            sphereBody = tBrep.createSphere(centerPoint, leavesRadius)
-
-            # Create a base feature
-            baseFeats = rootComp.features.baseFeatures
-            baseFeat = baseFeats.add()
-
-            # adds the sphere. we lose reference to the cylinder though it seems. at least in the UI
-            # reference was lost because of the edit state. once its done we see the cylinder again
-
-            baseFeat.startEdit()
-
-            body = bodies.add(sphereBody, baseFeat)
-
-            # Create a copy of the existing appearance.
-            newAppear = design.appearances.addByCopy(
-                yellowAppear, 'Color ' + str(i+1))
-
-            # Edit the "Color" property by setting it to a green color.
-            colorProp = adsk.core.ColorProperty.cast(
-                newAppear.appearanceProperties.itemByName('Color'))
-            red = random.randint(0, 30)
-            green = random.randint(100, 200)
-            blue = random.randint(0, 30)
-            colorProp.value = adsk.core.Color.create(
-                red, green, blue, 1)  # use green for leaves
-
-            # get the current body
-            # leavestocolor = rootComp.bRepBodies.item(i+1)
-            # get the current sphere to color
-            leavestocolor = body
-
-            # and color the sphere with this new material
-            print("body object type is")
-            print(body.objectType)
-            print(newAppear.appearanceProperties.itemByName('Color'))
-            leavestocolor.appearance = newAppear
-
-            baseFeat.finishEdit()
-
             # combine trunk and trunkbase
             TargetBody = trunkBody
 
             ToolBodies = adsk.core.ObjectCollection.create()
             ToolBodies.add(trunkBaseBody)
 
-            print("ToolBodies.objectType")
-            print(ToolBodies.objectType)
+            # print("ToolBodies.objectType")
+            # print(ToolBodies.objectType)
 
             CombineCutInput = rootComp.features.combineFeatures.createInput(
                 TargetBody, ToolBodies)
@@ -654,9 +465,9 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             CombineCutFeats.add(CombineCutInput)
 
             combinedTrunkEdges = trunkBody.edges
-            print("combined edges")
-            print(combinedTrunkEdges.count)
-            print(combinedTrunkEdges.objectType)
+            #print("combined edges")
+            # print(combinedTrunkEdges.count)
+            # print(combinedTrunkEdges.objectType)
 
             chamferSize = adsk.core.ValueInput.createByReal(0.6*donutThickness)
             # chamfersample
@@ -676,7 +487,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             combinedTrunkEdges = trunkBody.edges
             edges = adsk.core.ObjectCollection.create()
             edges.add(combinedTrunkEdges.item(1))
-            print(edges.count)
+            # print(edges.count)
 
             # fillet
             fillets = rootComp.features.filletFeatures
@@ -690,52 +501,34 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
 
             i = i+1
 
+        totalDepth = 4
 
+        global forProgressTotal
+        forProgressTotal = 4**(totalDepth+1)
 
+        thickFactor = random.uniform(0.5, 0.8)
+        axis1 = random.uniform(0.7, 1.3)
+        axis = adsk.core.Vector3D.create(axis1, 0.0, 0.0)
+        recursiveBranching(face, donutThickness*thickFactor,
+                           axis, totalDepth, newAppear)
 
-        # Create a transform to do move
-        vector = adsk.core.Vector3D.create(0.0, 10.0, 0.0)
-        transform = adsk.core.Matrix3D.create()
-        transform.translation = vector
+        thickFactor = random.uniform(0.5, 0.8)
+        axis1 = random.uniform(0.7, 1.3)
+        axis = adsk.core.Vector3D.create(0.0, axis1, 0.0)
+        recursiveBranching(face, donutThickness*thickFactor,
+                           axis, totalDepth, newAppear)
 
-        recursiveBranching(sk, face, donutThickness*0.6 , transform, 4)
+        thickFactor = random.uniform(0.5, 0.8)
+        axis1 = random.uniform(0.7, 1.3)
+        axis = adsk.core.Vector3D.create(0.0, -axis1, 0.0)
+        recursiveBranching(face, donutThickness*thickFactor,
+                           axis, totalDepth, newAppear)
 
-        # Create a transform to do move
-        vector = adsk.core.Vector3D.create(0.0, -10.0, 0.0)
-        transform = adsk.core.Matrix3D.create()
-        transform.translation = vector
-
-        recursiveBranching(sk, face, donutThickness*0.6 , transform, 4)
-
-
-        # Create a transform to do move
-        vector = adsk.core.Vector3D.create(10.0, 0.0, 0.0)
-        transform = adsk.core.Matrix3D.create()
-        transform.translation = vector
-
-        recursiveBranching(sk, face, donutThickness*0.6 , transform, 4)
-
-
-
-        # Create a transform to do move
-        vector = adsk.core.Vector3D.create(-10.0, 0.0, 0.0)
-        transform = adsk.core.Matrix3D.create()
-        transform.translation = vector
-
-
-
-        # Create a transform to do move
-        fromVector = adsk.core.Vector3D.create(0.0, 00.0, 10.0)
-        toVector = adsk.core.Vector3D.create(1.0, 1.0, 10.0)
-        transform = adsk.core.Matrix3D.create()
-        #transform.setWithCoordinateSystem(face.centroid, xAxis, yAxis, zAxis)
-        transform.setToRotateTo(fromVector, toVector) 
-
-        recursiveBranching(sk, face, donutThickness*0.6 , transform, 4)
-
-
-
-
+        thickFactor = random.uniform(0.5, 0.8)
+        axis1 = random.uniform(0.7, 1.3)
+        axis = adsk.core.Vector3D.create(-1.0, 0.0, 0.0)
+        recursiveBranching(face, donutThickness*thickFactor,
+                           axis, totalDepth, newAppear)
 
         # in the end combine objects to one
         # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
@@ -749,34 +542,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius):
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-def mouseClick():
-    ui = None
-    try:
-        app = adsk.core.Application.get()
-        ui = app.userInterface
-
-        # click
-        msg = 'Click on the surface'
-        sel = ui.selectEntity(msg, 'Faces')
-        if sel is None:
-            ui.messageBox('no face selected')
-        else:
-            clickPoint = sel.point
-
-            # sketch
-            root = adsk.fusion.Component.cast(app.activeProduct.rootComponent)
-            skt = root.sketches.add(root.xYConstructionPlane)
-            skt.sketchPoints.add(clickPoint)
-
-        ui.messageBox('done')
-
-    except:
-        if ui:
-            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-
-def recursiveBranching(sketchToBuildOn, face,  branchWidth, transform, depth):
+def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -788,24 +554,32 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, transform, depth):
             ui.messageBox('No active Fusion 360 design', 'No Design')
             return
         else:
-            if depth == 0:
-                exit
-            else:
-                # Get the root component of the active design.
-                rootComp = design.rootComponent
+            # Get the root component of the active design.
+            rootComp = design.rootComponent
 
-                # Get the SketchCircles collection from an existing sketch.
-                circles = sketchToBuildOn.sketchCurves.sketchCircles
+            if depth == 0:
+
+                leavSize = branchWidth*10
+                addLeaves(face, leavSize, yellowAppear)
+            else:
 
                 # Get the ExtrudeFeatures collection.
                 extrudes = rootComp.features.extrudeFeatures
 
+                # create sketch on old face
+                #topFace = branchbody.faces.item(1)
+                oldFacesSketch = rootComp.sketches.add(face)
+
+                # Get the SketchCircles collection from an existing sketch.
+                circles = oldFacesSketch.sketchCurves.sketchCircles
+
                 # Call an add method on the collection to create a new circle.
                 circle = circles.addByCenterRadius(
-                    face.centroid, branchWidth)
+                    oldFacesSketch.modelToSketchSpace(face.centroid), branchWidth)
+                # adsk.core.Point3D.create(0, 0, 0), branchWidth)
 
                 # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
-                prof = sketchToBuildOn.profiles.item(1)
+                prof = oldFacesSketch.profiles.item(1)
 
                 # Create a extrude input object that defines the input for a extrude feature.
                 # When creating the input object, required settings are provided as arguments.
@@ -815,13 +589,14 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, transform, depth):
                     prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
                 # extrude the cirlce by treeheight amount
-                dist = adsk.core.ValueInput.createByReal(branchWidth)
+                dist = adsk.core.ValueInput.createByReal(branchWidth*3)
                 extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
                     dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
                 extInput.isSolid = True
 
                 # Create a start extent that starts from a brep face with an offset of 10 mm.
-                abstand = adsk.core.ValueInput.createByReal(branchWidth*5)
+                # CURRENTLY DOESNT ATT THE DISTANCE BECAUSE FOR SOME REASON THE CIRCLE ON THE SKETCH IS ALREADY SO FAR AWAY
+                abstand = adsk.core.ValueInput.createByReal(branchWidth*3)
                 start_from = adsk.fusion.FromEntityStartDefinition.create(
                     face, abstand)
                 extInput.startExtent = start_from
@@ -831,23 +606,31 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, transform, depth):
 
                 # just get the current brach that we just extruded
                 branchbody = ext.bodies.item(0)
-                print("in recursion branchbody objecttype")
-                print(branchbody.objectType)
+                #print("in recursion branchbody objecttype")
+                # print(branchbody.objectType)
+
+                # color branch
+                branchbody.appearance = yellowAppear
 
                 # Create a collection of entities for move
+                # OR IS IT HERE, IS OBJECTCOLLECTION GLOBAL?
                 bodies = adsk.core.ObjectCollection.create()
                 bodies.add(branchbody)
-                    
-
 
                 # Create a transform to do move
                 #fromVector = adsk.core.Vector3D.create(0.0, 00.0, 1.0)
                 #toVector = adsk.core.Vector3D.create(1.0, 1.0, 1.0)
-                #transform = adsk.core.Matrix3D.create()
+                transform = adsk.core.Matrix3D.create()
+                #yAxis = adsk.core.Vector3D.create(0.0,1.0,0.0)
                 #transform.setWithCoordinateSystem(face.centroid, xAxis, yAxis, zAxis)
-                # transform.setToRotation(0.25,, face.centroid)
+
+                # ROTATION ANGLE CAN ALSO BE RANDOMIZED OR SHOULD MAYBE BE ADJUSTED ACCORDING TO HOW MANY DEPTH STEPS THERE WILL BE
+                branchAngle = random.uniform(0.5, 1.0)
+                transform.setToRotation(branchAngle, axis, face.centroid)
+                # transform.setToRotateTo(0.25,, face.centroid)
 
                 # Create a move feature
+                # moveFeats = adsk.fusion.MoveFeature.
                 moveFeats = rootComp.features.moveFeatures
                 moveFeatureInput = moveFeats.createInput(bodies, transform)
                 moveFeats.add(moveFeatureInput)
@@ -858,9 +641,11 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, transform, depth):
                 # print(branchbody.objectType)
 
                 # create face and sketch for next iteration
+                # I THINK THIS IS WHERE THE RECURSION IS FAILING; THE TOPFACE IS ALWAYS THE SAME ITEM THEN
                 topFace = branchbody.faces.item(1)
-                print(topFace.objectType)
-                newSketch = rootComp.sketches.add(topFace)
+                #
+                # print(topFace.objectType)
+                #newSketch = rootComp.sketches.add(topFace)
 
                 # Create loft feature input
                 loftFeats = rootComp.features.loftFeatures
@@ -884,12 +669,109 @@ def recursiveBranching(sketchToBuildOn, face,  branchWidth, transform, depth):
                 loftInput.isSolid = True
 
                 # Create loft feature
-                loftFeats.add(loftInput)
+                loftbodies = loftFeats.add(loftInput)
+
+                # color loft
+                loftbody = loftbodies.bodies.item(0)
+                loftbody.appearance = yellowAppear
+
+                thickFactor = random.uniform(0.4, 0.8)
+                axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(axis1, 0.0, 0.0)
+                recursiveBranching(topFace, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear)
+
+                thickFactor = random.uniform(0.4, 0.8)
+                axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(0.0, axis1, 0.0)
+                recursiveBranching(topFace, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear)
+
+                thickFactor = random.uniform(0.4, 0.8)
+                axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(0.0, -axis1, 0.0)
+                recursiveBranching(topFace, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear)
+
+                thickFactor = random.uniform(0.4, 0.8)
+                axis1 = random.uniform(0.7, 1.3)
+                axis = adsk.core.Vector3D.create(-axis1, 0.0, 0.0)
+                recursiveBranching(topFace, branchWidth *
+                                   thickFactor, axis, depth-1, yellowAppear)
+
+                # print("Depth")
+                # print(depth)
+                # print("completed")
+
+                # call recusrively
+                #recursiveBranching(topFace, branchWidth*0.6, axis, depth-1, yellowAppear)
+
+    except:
+        if ui:
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-                #call recusrively 
-                recursiveBranching(newSketch, topFace, branchWidth*0.6, transform, depth-1)
-    
+def addLeaves(face, leavesRadius, yellowAppear):
+    app = adsk.core.Application.get()
+    ui = app.userInterface
+    #ui.messageBox('in createDonuts')
+
+    try:
+        # get the design  //selfmade
+        design = adsk.fusion.Design.cast(app.activeProduct)
+        if not design:
+            ui.messageBox('No active Fusion 360 design', 'No Design')
+            return
+        else:
+            # Get the root component of the active design.
+            rootComp = design.rootComponent
+            # prepares the sphere, using only the centerpoint of the surface though.
+            bodies = rootComp.bRepBodies
+            # maybe possible with permanent?
+            tBrep = adsk.fusion.TemporaryBRepManager.get()
+            centerPoint = face.centroid
+            sphereBody = tBrep.createSphere(centerPoint, leavesRadius)
+
+            # Create a base feature
+            baseFeats = rootComp.features.baseFeatures
+            baseFeat = baseFeats.add()
+
+            # adds the sphere. we lose reference to the cylinder though it seems. at least in the UI
+            # reference was lost because of the edit state. once its done we see the cylinder again
+
+            baseFeat.startEdit()
+
+            body = bodies.add(sphereBody, baseFeat)
+
+            # Create a copy of the existing appearance.
+            newAppear = design.appearances.addByCopy(
+                yellowAppear, 'Color ' + str(random.randint(0, 10000000000)))
+
+            # Edit the "Color" property by setting it to a green color.
+            colorProp = adsk.core.ColorProperty.cast(
+                newAppear.appearanceProperties.itemByName('Color'))
+            red = random.randint(0, 30)
+            green = random.randint(100, 200)
+            blue = random.randint(0, 30)
+            colorProp.value = adsk.core.Color.create(
+                red, green, blue, 1)  # use green for leaves
+
+            # get the current body
+            # leavestocolor = rootComp.bRepBodies.item(i+1)
+            # get the current sphere to color
+            leavestocolor = body
+
+            # and color the sphere with this new material
+            #print("body object type is")
+            # print(body.objectType)
+            # print(newAppear.appearanceProperties.itemByName('Color'))
+            leavestocolor.appearance = newAppear
+
+            baseFeat.finishEdit()
+
+            global progresscounter
+            progresscounter = progresscounter + 1
+            print(str(progresscounter) + '/' + str(forProgressTotal))
 
     except:
         if ui:
