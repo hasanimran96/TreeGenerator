@@ -238,14 +238,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         treetopsMax = inputs.itemById('treetops').valueTwo
         print("got all values and treetops leaves")
 
-        branchingAngle = inputs.itemById('branchingAngle').valueOne
-        branchingAngle = branchingAngle/10
-        #turn the integer into a rad value betweeen 0.5 to 1.0
-        print("got Branchingvalue")
 
-
-        recursionDepthValue = inputs.itemById('recursionDepth').valueOne
-        print("got recursiondepth")
 
         # GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
        # selectedSurfaceInput = inputs.itemById('surfaceInput')
@@ -263,18 +256,24 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
 
         # assign values to random values based on either base size or selected ranges if high customizability is desired
         if hasHighCustomizability:
-            donutThickness = random.randint(
-                donutMinThickness, donutMaxThickness)
-            print("donutThickness")
-            print(donutThickness)
-            treeHeight = random.randint(treeMinHeight, treeMaxHeight)
-            leavesRadius = random.randint(treetopsMin, treetopsMax)
-        else:
-            donutThickness = baseSize + random.randint(0, round(baseSize/2))
+            donutThickness = baseSize*2 + random.randint(0, round(baseSize))
             treeHeight = baseSize*10 + random.randint(0, baseSize*3)
-            print("donutThickness")
-            print(donutThickness)
-            leavesRadius = baseSize*5 + random.randint(0, baseSize)
+            #i dont think we need the leavesradius here anymore
+            leavesRadius = baseSize*5 + random.randint(0, baseSize) 
+            #selectedBRepFace is done elsewhere 
+            branchingAngle = inputs.itemById('branchingAngle').valueOne
+            branchingAngle = branchingAngle/10
+            #turn the integer into a rad value betweeen 0.5 to 1.0
+            recursionDepthValue = inputs.itemById('recursionDepth').valueOne
+
+        else:
+            donutThickness = baseSize*2 + random.randint(0, round(baseSize))
+            treeHeight = baseSize*10 + random.randint(0, baseSize*3)
+            #i dont think we need the leavesradius here anymore
+            leavesRadius = baseSize*5 + random.randint(0, baseSize) 
+            #selectedBRepFace is done elsewhere 
+            branchingAngle = 0.75 
+            recursionDepthValue = 3
 
 
         leavesRadius = treeHeight*0.1
