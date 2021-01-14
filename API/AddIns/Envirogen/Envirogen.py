@@ -88,13 +88,16 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         selectionInput.setSelectionLimits(0, 1)
         selectionInput.addSelectionFilter('Faces')
         # selectionInput.addSelectionFilter('ConstructionPlanes')
+        selectionInput.isFullWidth = False   
+
 
         # Create the value input to get the bbase size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Tree size', 5, 30, 1, 10)
+        baseSize.isFullWidth = False
+        
 
-        recursionDepth = inputs.addIntegerSpinnerCommandInput(
-            'recursionDepth', 'Recursion Depth', 0, 5, 1, 3)
+
 
         # Create a check box to get if high cusomizability is desired
         highCustomizability = inputs.addBoolValueInput('highCustomizability', 'Customize tree',
@@ -146,7 +149,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
 
 
-         # Create group input.
+         # Create group input. Brnching Angle
         groupCmdInputAngle = inputs.addGroupCommandInput('Branching Angle Group', 'Branching Angle')
         groupCmdInputAngle.isExpanded = False
         groupCmdInputAngle.isVisible = False
@@ -163,6 +166,29 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         branchingAngle.isVisible = True
         branchingAngle.setText("narrow","wide")
         branchingAngle.isFullWidth = True
+
+
+
+ 
+        # Create group input.
+        groupCmdInputDepth = inputs.addGroupCommandInput('Branching Depth Group', 'Branching Depth')
+        groupCmdInputDepth.isExpanded = False
+        groupCmdInputDepth.isVisible = False
+        groupCmdInputDepth.isEnabledCheckBoxDisplayed = False
+        groupChildInputsDepth = groupCmdInputDepth.children
+        branchingDepthImage = groupChildInputsDepth.addImageCommandInput('image2', 'Image2', "resources/Graffle-Trees-Detail.png")
+        branchingDepthImage.isFullWidth = True
+
+        branchDepth = groupChildInputsDepth.addIntegerSliderCommandInput(
+            'recursionDepth', 'Recursion Depth', 0, 5)
+
+        branchDepth.isVisible = True
+        #branchDepth.setText("narrow","wide")
+        branchDepth.isFullWidth = True
+
+
+
+
 
         # Connect to the execute event.
         onExecute = SampleCommandExecuteHandler()
@@ -218,7 +244,8 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         print("got Branchingvalue")
 
 
-        recursionDepthValue = inputs.itemById('recursionDepth').value
+        recursionDepthValue = inputs.itemById('recursionDepth').valueOne
+        print("got recursiondepth")
 
         # GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
        # selectedSurfaceInput = inputs.itemById('surfaceInput')
@@ -249,6 +276,8 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
             print(donutThickness)
             leavesRadius = baseSize*5 + random.randint(0, baseSize)
 
+
+        leavesRadius = treeHeight*0.1
         # call the method to create the tree
         createDonuts(donutThickness, treeHeight,
                      leavesRadius, selectedBRepFace, branchingAngle, recursionDepthValue)
@@ -278,6 +307,8 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
             heightInput = inputs.itemById('height')
             treetopInput = inputs.itemById('treetops')
             angleGroup = inputs.itemById('Branching Angle Group')
+            depthGroup = inputs.itemById('Branching Depth Group')
+            
 
             # Change the visibility of the inputs related to high customizability
             if changedInput.value == True:
@@ -286,11 +317,13 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
                 #treetopInput.isVisible = True
                 #these are not used anymore i think
                 angleGroup.isVisible = True
+                depthGroup.isVisible = True
             else:
                 thicknessInput.isVisible = False
                 heightInput.isVisible = False
                 treetopInput.isVisible = False
                 angleGroup.isVisible = False
+                depthGroup.isVisible = False
 
         # for some reason acessing it from here works, but not from the execute command handler or the createDOnuts (if you save it here into a global variable)
         if changedInput.id == 'surfaceInput':
@@ -760,7 +793,7 @@ def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor, branch
         branchDecision = branchFactor
 
         if depth == 0:
-            leavSize = branchWidth*10
+            leavSize = branchWidth*5
             addLeaves(face, leavSize, yellowAppear)
         else:
 
