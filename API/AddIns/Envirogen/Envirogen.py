@@ -140,6 +140,27 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
                                                        30, 60, True)
         treetops.isVisible = False
 
+
+
+
+         # Create group input.
+        groupCmdInputAngle = inputs.addGroupCommandInput('Branching Angle Group', 'Branching Angle')
+        groupCmdInputAngle.isExpanded = False
+        groupCmdInputAngle.isVisible = False
+        groupCmdInputAngle.isEnabledCheckBoxDisplayed = False
+        groupChildInputsAngle = groupCmdInputAngle.children
+        branchinAngleImage = groupChildInputsAngle.addImageCommandInput('image', 'Image', "resources/Graffle-Trees.png")
+        branchinAngleImage.isFullWidth = True
+        # Create the slider to get the BranchingAngle 
+        # be 30 to 60 of whatever the current document unit is.
+        branchingAngle = groupChildInputsAngle.addIntegerSliderCommandInput('branchingAngle',
+                                                       'branchingAngle',
+
+                                                       5, 10)
+        branchingAngle.isVisible = True
+        branchingAngle.setText("narrow","wide")
+        branchingAngle.isFullWidth = True
+
         # Connect to the execute event.
         onExecute = SampleCommandExecuteHandler()
         cmd.execute.add(onExecute)
@@ -188,6 +209,11 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         treetopsMax = inputs.itemById('treetops').valueTwo
         print("got all values and treetops leaves")
 
+        branchingAngle = inputs.itemById('branchingAngle').valueOne
+        branchingAngle = branchingAngle/10
+        #turn the integer into a rad value betweeen 0.5 to 1.0
+        print("got Branchingvalue")
+
         # GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
        # selectedSurfaceInput = inputs.itemById('surfaceInput')
         # next line is okay, debugging shows that the count is 1 as expected. don't know why next line code stops
@@ -219,7 +245,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
 
         # call the method to create the tree
         createDonuts(donutThickness, treeHeight,
-                     leavesRadius, selectedBRepFace)
+                     leavesRadius, selectedBRepFace, branchingAngle)
 
         # ui.messageBox('function createDonuts is completed')
 
@@ -245,16 +271,20 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
             thicknessInput = inputs.itemById('thickness')
             heightInput = inputs.itemById('height')
             treetopInput = inputs.itemById('treetops')
+            angleGroup = inputs.itemById('Branching Angle Group')
 
             # Change the visibility of the inputs related to high customizability
             if changedInput.value == True:
-                thicknessInput.isVisible = True
-                heightInput.isVisible = True
-                treetopInput.isVisible = True
+                #thicknessInput.isVisible = True
+                #heightInput.isVisible = True
+                #treetopInput.isVisible = True
+                #these are not used anymore i think
+                angleGroup.isVisible = True
             else:
                 thicknessInput.isVisible = False
                 heightInput.isVisible = False
                 treetopInput.isVisible = False
+                angleGroup.isVisible = False
 
         # for some reason acessing it from here works, but not from the execute command handler or the createDOnuts (if you save it here into a global variable)
         if changedInput.id == 'surfaceInput':
@@ -270,7 +300,7 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
 # donutThickness radius of the rings
 # treeHeight height of the tree
 # leavesRadius radius of the treetop
-def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace):
+def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, branchingAngle):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -553,7 +583,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace):
             branchFactor = 0
 
             callSplit(face, donutThickness, axis,
-                      totalDepth, newAppear, branchFactor)
+                      totalDepth, newAppear, branchFactor, branchingAngle)
 
             # in the end combine objects to one
             # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
@@ -570,7 +600,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace):
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFactor):
+def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -647,8 +677,8 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
             #transform.setWithCoordinateSystem(face.centroid, xAxis, yAxis, zAxis)
 
             # ROTATION ANGLE CAN ALSO BE RANDOMIZED OR SHOULD MAYBE BE ADJUSTED ACCORDING TO HOW MANY DEPTH STEPS THERE WILL BE
-            branchAngle = random.uniform(0.5, 1.0)
-            transform.setToRotation(branchAngle, axis, face.centroid)
+            #branchAngle = random.uniform(0.5, 1.0)
+            transform.setToRotation(branchingAngle, axis, face.centroid)
             # transform.setToRotateTo(0.25,, face.centroid)
 
             # Create a move feature
@@ -698,7 +728,7 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
             loftbody.appearance = yellowAppear
 
             callSplit(topFace, branchWidth, axis,
-                      depth, yellowAppear, branchFactor)
+                      depth, yellowAppear, branchFactor, branchingAngle)
 
             # print("Depth")
             # print(depth)
@@ -715,7 +745,7 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
 # actually makes the recursive calls for the function and
 # calculates the random values and angles
 # if branchFactor == 0, it will select a random between 3, 4 and 5
-def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor):
+def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -736,75 +766,75 @@ def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor):
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(1.0, -0.577, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-1, -0.577, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
             if branchDecision == 4:
                 thickFactor = random.uniform(0.5, 0.8)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(axis1, 0.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, axis1, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, -axis1, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-axis1, 0.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
             if branchDecision == 5:
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(1.0, 0.325, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-1, 0.325, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.727, -1.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-0.727, -1, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
 
     except:
         if ui:
