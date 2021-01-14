@@ -88,16 +88,12 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         selectionInput.setSelectionLimits(0, 1)
         selectionInput.addSelectionFilter('Faces')
         # selectionInput.addSelectionFilter('ConstructionPlanes')
-        selectionInput.isFullWidth = False   
-
+        selectionInput.isFullWidth = False
 
         # Create the value input to get the bbase size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Tree size', 5, 30, 1, 10)
         baseSize.isFullWidth = False
-        
-
-
 
         # Create a check box to get if high cusomizability is desired
         highCustomizability = inputs.addBoolValueInput('highCustomizability', 'Customize tree',
@@ -146,49 +142,43 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
                                                        30, 60, True)
         treetops.isVisible = False
 
-
-
-
-         # Create group input. Brnching Angle
-        groupCmdInputAngle = inputs.addGroupCommandInput('Branching Angle Group', 'Branching Angle')
+        # Create group input. Brnching Angle
+        groupCmdInputAngle = inputs.addGroupCommandInput(
+            'Branching Angle Group', 'Branching Angle')
         groupCmdInputAngle.isExpanded = False
         groupCmdInputAngle.isVisible = False
         groupCmdInputAngle.isEnabledCheckBoxDisplayed = False
         groupChildInputsAngle = groupCmdInputAngle.children
-        branchinAngleImage = groupChildInputsAngle.addImageCommandInput('image', 'Image', "resources/Graffle-Trees.png")
+        branchinAngleImage = groupChildInputsAngle.addImageCommandInput(
+            'image', 'Image', "resources/Graffle-Trees.png")
         branchinAngleImage.isFullWidth = True
-        # Create the slider to get the BranchingAngle 
+        # Create the slider to get the BranchingAngle
         # be 30 to 60 of whatever the current document unit is.
         branchingAngle = groupChildInputsAngle.addIntegerSliderCommandInput('branchingAngle',
-                                                       'branchingAngle',
+                                                                            'branchingAngle',
 
-                                                       5, 10)
+                                                                            5, 10)
         branchingAngle.isVisible = True
-        branchingAngle.setText("narrow","wide")
+        branchingAngle.setText("narrow", "wide")
         branchingAngle.isFullWidth = True
 
-
-
- 
         # Create group input.
-        groupCmdInputDepth = inputs.addGroupCommandInput('Branching Depth Group', 'Branching Depth')
+        groupCmdInputDepth = inputs.addGroupCommandInput(
+            'Branching Depth Group', 'Branching Depth')
         groupCmdInputDepth.isExpanded = False
         groupCmdInputDepth.isVisible = False
         groupCmdInputDepth.isEnabledCheckBoxDisplayed = False
         groupChildInputsDepth = groupCmdInputDepth.children
-        branchingDepthImage = groupChildInputsDepth.addImageCommandInput('image2', 'Image2', "resources/Graffle-Trees-Detail.png")
+        branchingDepthImage = groupChildInputsDepth.addImageCommandInput(
+            'image2', 'Image2', "resources/Graffle-Trees-Detail.png")
         branchingDepthImage.isFullWidth = True
 
         branchDepth = groupChildInputsDepth.addIntegerSliderCommandInput(
             'recursionDepth', 'Recursion Depth', 0, 5)
 
         branchDepth.isVisible = True
-        #branchDepth.setText("narrow","wide")
+        # branchDepth.setText("narrow","wide")
         branchDepth.isFullWidth = True
-
-
-
-
 
         # Connect to the execute event.
         onExecute = SampleCommandExecuteHandler()
@@ -238,8 +228,6 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         treetopsMax = inputs.itemById('treetops').valueTwo
         print("got all values and treetops leaves")
 
-
-
         # GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
        # selectedSurfaceInput = inputs.itemById('surfaceInput')
         # next line is okay, debugging shows that the count is 1 as expected. don't know why next line code stops
@@ -258,23 +246,22 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         if hasHighCustomizability:
             donutThickness = baseSize*2 + random.randint(0, round(baseSize))
             treeHeight = baseSize*10 + random.randint(0, baseSize*3)
-            #i dont think we need the leavesradius here anymore
-            leavesRadius = baseSize*5 + random.randint(0, baseSize) 
-            #selectedBRepFace is done elsewhere 
+            # i dont think we need the leavesradius here anymore
+            leavesRadius = baseSize*5 + random.randint(0, baseSize)
+            # selectedBRepFace is done elsewhere
             branchingAngle = inputs.itemById('branchingAngle').valueOne
             branchingAngle = branchingAngle/10
-            #turn the integer into a rad value betweeen 0.5 to 1.0
+            # turn the integer into a rad value betweeen 0.5 to 1.0
             recursionDepthValue = inputs.itemById('recursionDepth').valueOne
 
         else:
             donutThickness = baseSize*2 + random.randint(0, round(baseSize))
             treeHeight = baseSize*10 + random.randint(0, baseSize*3)
-            #i dont think we need the leavesradius here anymore
-            leavesRadius = baseSize*5 + random.randint(0, baseSize) 
-            #selectedBRepFace is done elsewhere 
-            branchingAngle = 0.75 
+            # i dont think we need the leavesradius here anymore
+            leavesRadius = baseSize*5 + random.randint(0, baseSize)
+            # selectedBRepFace is done elsewhere
+            branchingAngle = 0.75
             recursionDepthValue = 3
-
 
         leavesRadius = treeHeight*0.1
         # call the method to create the tree
@@ -307,14 +294,13 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
             treetopInput = inputs.itemById('treetops')
             angleGroup = inputs.itemById('Branching Angle Group')
             depthGroup = inputs.itemById('Branching Depth Group')
-            
 
             # Change the visibility of the inputs related to high customizability
             if changedInput.value == True:
                 #thicknessInput.isVisible = True
                 #heightInput.isVisible = True
                 #treetopInput.isVisible = True
-                #these are not used anymore i think
+                # these are not used anymore i think
                 angleGroup.isVisible = True
                 depthGroup.isVisible = True
             else:
@@ -358,277 +344,276 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
         progressDialog.isCancelButtonShown = True
 
         progressMin = 0
-        progressMax = 1
+        progressMax = 5
         progressIncrement = 1
-        #WHS THIS? ALL THIS DOES IS MAKE THE PROGRAMM EXECUTE THE WHOLE CODE 5 TIMES
+        progress = 0
+        # WHS THIS? ALL THIS DOES IS MAKE THE PROGRAMM EXECUTE THE WHOLE CODE 5 TIMES
 
         # Show dialog
         progressDialog.show(
             'Progress Dialog', 'Percentage: %p, Current Value: %v, Total steps: %m', progressMin, progressMax, progressIncrement)
 
-        for progress in range(progressMax):
-            # If progress dialog is cancelled, stop drawing.
-            if progressDialog.wasCancelled:
-                break
+        # If progress dialog is cancelled, stop drawing.
+        # if progressDialog.wasCancelled:
+        #     return
 
-            #-------------------------------------------------#
+        #-------------------------------------------------#
 
-            # Get the root component of the active design.
-            rootComp = design.rootComponent
+        # Get the root component of the active design.
+        rootComp = design.rootComponent
 
-            # Create a new sketch on the xy plane.
-            sketches = rootComp.sketches
-            xyPlane = rootComp.xYConstructionPlane
-            sketch = sketches.add(xyPlane)
+        # Create a new sketch on the xy plane.
+        sketches = rootComp.sketches
+        xyPlane = rootComp.xYConstructionPlane
+        sketch = sketches.add(xyPlane)
+
+        # Get the SketchCircles collection from an existing sketch.
+        circles = sketch.sketchCurves.sketchCircles
+
+        # Get the SketchLines collection from an existing sketch.
+        lines = sketch.sketchCurves.sketchLines
+
+        # Get the RevolveFeatures collection.
+        revolves = rootComp.features.revolveFeatures
+
+        # NEW
+        # Get the ExtrudeFeatures collection.
+        extrudes = rootComp.features.extrudeFeatures
+
+        # Get a reference to an appearance in the library.
+        lib = app.materialLibraries.itemByName(
+            'Fusion 360 Appearance Library')
+        libAppear = lib.appearances.itemByName('Plastic - Matte (Yellow)')
+
+        # copy material into the design
+        libAppear.copyTo(design)
+        yellowAppear = design.appearances.itemByName(libAppear.name)
+
+        # only one tree
+        i = 0
+        while i <= (0):
+
+            pointForTreestart = selectedBRepFace.centroid
+
+            # new tree
+            # Call an add method on the collection to create a new circle.
+            circle = circles.addByCenterRadius(
+                # adsk.core.Point3D.create(5*i, 0, 0), donutThickness)
+                pointForTreestart, donutThickness)
+
+            # Call an add method on the collection to create a new line.
+            axis = lines.addByTwoPoints(adsk.core.Point3D.create(
+                5*i-1, -4, 0), adsk.core.Point3D.create(5*i+1, -4, 0))
+
+            # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
+            prof = sketch.profiles.item(i)
+
+            # Create a extrude input object that defines the input for a extrude feature.
+            # When creating the input object, required settings are provided as arguments.
+            #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            # NEW
+            extInput = extrudes.createInput(
+                prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+
+            # extrude the cirlce by treeheight amount
+
+            dist = adsk.core.ValueInput.createByReal(treeHeight)
+            extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+                dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
+            extInput.isSolid = True
+
+            # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
+            #rev = revolves.add(revInput)
+            # NEW
+            ext = extrudes.add(extInput)
+            #ext = extrudes.addSimple()
+
+            # ---------------------------
+            # Update progress value of progress dialog
+            progressDialog.progressValue = progress+progressIncrement
+            # ---------------------------
+
+            # print(extrudes.endFaces.count)
+            # print(extrudes.endFaces.classType)
+            # print(extrudes.endFaces.objectType)
+
+            # get component collection
+            #comp = rev.parentComponent
+
+            # used for debugging
+            # print(rev.objectType)
+            # print(libAppear.objectType)
+            # print(libAppear.name)
+
+            # get the current body
+            # bodytocolor = rootComp.bRepBodies.item(i)
+            # just get the current trunk that we just extruded
+            trunkBody = ext.bodies.item(i)
+
+            # Create a copy of the existing appearance.
+            newAppear = design.appearances.addByCopy(
+                yellowAppear, 'Color ' + str(i+1))
+
+            # Edit the "Color" property by setting it to a random brown color.
+            colorProp = adsk.core.ColorProperty.cast(
+                newAppear.appearanceProperties.itemByName('Color'))
+            red = random.randint(100, 180)
+            green = random.randint(50, 90)
+            blue = random.randint(0, 20)
+            colorProp.value = adsk.core.Color.create(
+                red, green, blue, 1)  # use brown for trunk
+
+            # and color the body with this new material
+            trunkBody.appearance = newAppear
+
+            # ---------------------------
+            # Update progress value of progress dialog
+            progressDialog.progressValue = progress+progressIncrement
+            # ---------------------------
+
+            # add the base for the trunk
+            trunkBaseSketch = sketches.add(xyPlane)
 
             # Get the SketchCircles collection from an existing sketch.
-            circles = sketch.sketchCurves.sketchCircles
+            trunkBaseCircles = trunkBaseSketch.sketchCurves.sketchCircles
 
-            # Get the SketchLines collection from an existing sketch.
-            lines = sketch.sketchCurves.sketchLines
+            # circle on sketch
+            trunkBase = trunkBaseCircles.addByCenterRadius(
+                pointForTreestart, 2*donutThickness)
+            # get profile
+            trunkBaseProf = trunkBaseSketch.profiles.item(i)
+            # create input object
+            trunkBaseExtInput = extrudes.createInput(
+                trunkBaseProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            # extrude the cirlce by treeheight amount
+            trunkBaseDist = adsk.core.ValueInput.createByReal(1)
+            trunkBaseExtInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+                trunkBaseDist), adsk.fusion.ExtentDirections.NegativeExtentDirection)
+            trunkBaseExtInput.isSolid = True
+            # add body
+            trunkBaseExt = extrudes.add(trunkBaseExtInput)
+            # get body
+            trunkBaseBody = trunkBaseExt.bodies.item(i)
 
-            # Get the RevolveFeatures collection.
-            revolves = rootComp.features.revolveFeatures
+            # ---------------------------
+            # Update progress value of progress dialog
+            progressDialog.progressValue = progress+progressIncrement
+            # ---------------------------
 
-            # NEW
-            # Get the ExtrudeFeatures collection.
-            extrudes = rootComp.features.extrudeFeatures
+            # Get one face and edge of the extrusion body
+            #face = extrudes.endFaces.item(0)
+            # print("extrudes")
+            # print(face.objectType)
+            # exttudes has no endfaces
+            #face = extInput.endFaces.item(0)
+            # print("extInput")
+            # print(face.objectType)
+            # has no endfaces
+            # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead ::: face = ext.faces.item(1) :::this worked
+            face = ext.endFaces.item(0)
+            # print("ext")
+            # print(face.objectType)
+            # print(face.area)
+            # print(face.geometry)
+            # print(face.evaluator)
+            # print(face.body)
+            # print(face.attributes)
+            #edge = face.edges.item(0)
 
-            # Get a reference to an appearance in the library.
-            lib = app.materialLibraries.itemByName(
-                'Fusion 360 Appearance Library')
-            libAppear = lib.appearances.itemByName('Plastic - Matte (Yellow)')
+            # Create a slant construction plane with an angle of 45 deg on the xZConstructionPlane
+            #planeInput = rootComp.constructionPlanes.createInput()
+            #planeInput.setByAngle(edge, adsk.core.ValueInput.createByString('45 deg'), rootComp.xZConstructionPlane)
+            #plane = rootComp.constructionPlanes.add(planeInput)
 
-            # copy material into the design
-            libAppear.copyTo(design)
-            yellowAppear = design.appearances.itemByName(libAppear.name)
+            # Create another sketch containing a circle profile on the slant plane
+            #toolSketch = rootComp.sketches.add(plane)
+            #sketchCircles = toolSketch.sketchCurves.sketchCircles
+            #circle = sketchCircles.addByCenterRadius(point0, 3)
 
-            # only one tree
-            i = 0
-            while i <= (0):
+            # Create a sketch.
+            #sketchOnCylinder = sketches.add(face)
+            #surface = ext.faces.item(0)
+            # print(surface.objectType)
 
-                pointForTreestart = selectedBRepFace.centroid
+            #centerPoint = face.centroid
+            # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead
+            sk = rootComp.sketches.add(face)
+            #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
 
-                # new tree
-                # Call an add method on the collection to create a new circle.
-                circle = circles.addByCenterRadius(
-                    # adsk.core.Point3D.create(5*i, 0, 0), donutThickness)
-                    pointForTreestart, donutThickness)
+            # combine trunk and trunkbase
+            TargetBody = trunkBody
 
-                # Call an add method on the collection to create a new line.
-                axis = lines.addByTwoPoints(adsk.core.Point3D.create(
-                    5*i-1, -4, 0), adsk.core.Point3D.create(5*i+1, -4, 0))
+            ToolBodies = adsk.core.ObjectCollection.create()
+            ToolBodies.add(trunkBaseBody)
 
-                # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
-                prof = sketch.profiles.item(i)
+            # print("ToolBodies.objectType")
+            # print(ToolBodies.objectType)
 
-                # Create a extrude input object that defines the input for a extrude feature.
-                # When creating the input object, required settings are provided as arguments.
-                #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-                # NEW
-                extInput = extrudes.createInput(
-                    prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+            CombineCutInput = rootComp.features.combineFeatures.createInput(
+                TargetBody, ToolBodies)
 
-                # extrude the cirlce by treeheight amount
+            CombineCutFeats = rootComp.features.combineFeatures
+            CombineCutInput = CombineCutFeats.createInput(
+                TargetBody, ToolBodies)
+            CombineCutFeats.add(CombineCutInput)
 
-                dist = adsk.core.ValueInput.createByReal(treeHeight)
-                extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
-                    dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
-                extInput.isSolid = True
+            combinedTrunkEdges = trunkBody.edges
+            #print("combined edges")
+            # print(combinedTrunkEdges.count)
+            # print(combinedTrunkEdges.objectType)
 
-                # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
-                #rev = revolves.add(revInput)
-                # NEW
-                ext = extrudes.add(extInput)
-                #ext = extrudes.addSimple()
+            chamferSize = adsk.core.ValueInput.createByReal(
+                0.6*donutThickness)
+            # chamfersample
+            # prepare chamfer
+            #faces = sweep.faces
+            edges = adsk.core.ObjectCollection.create()
+            edges.add(combinedTrunkEdges.item(1))
 
-                # ---------------------------
-                # Update progress value of progress dialog
-                progressDialog.progressValue = progress+progressIncrement
-                # ---------------------------
+            chamfers = rootComp.features.chamferFeatures
 
-                # print(extrudes.endFaces.count)
-                # print(extrudes.endFaces.classType)
-                # print(extrudes.endFaces.objectType)
+            chamferInput = chamfers.createInput(edges, False)
+            chamferInput.setToEqualDistance(chamferSize)
 
-                # get component collection
-                #comp = rev.parentComponent
+            chamfer = chamfers.add(chamferInput)
 
-                # used for debugging
-                # print(rev.objectType)
-                # print(libAppear.objectType)
-                # print(libAppear.name)
+            # define the edges anew after we have the new bod with chamfer
+            combinedTrunkEdges = trunkBody.edges
+            edges = adsk.core.ObjectCollection.create()
+            edges.add(combinedTrunkEdges.item(1))
+            # print(edges.count)
 
-                # get the current body
-                # bodytocolor = rootComp.bRepBodies.item(i)
-                # just get the current trunk that we just extruded
-                trunkBody = ext.bodies.item(i)
+            # fillet
+            fillets = rootComp.features.filletFeatures
 
-                # Create a copy of the existing appearance.
-                newAppear = design.appearances.addByCopy(
-                    yellowAppear, 'Color ' + str(i+1))
+            filletInput = fillets.createInput()
+            filletSize = adsk.core.ValueInput.createByReal(0.5*treeHeight)
+            filletInput.addConstantRadiusEdgeSet(edges, filletSize, False)
+            # filletInput.isRollingBallCorner(True)
 
-                # Edit the "Color" property by setting it to a random brown color.
-                colorProp = adsk.core.ColorProperty.cast(
-                    newAppear.appearanceProperties.itemByName('Color'))
-                red = random.randint(100, 180)
-                green = random.randint(50, 90)
-                blue = random.randint(0, 20)
-                colorProp.value = adsk.core.Color.create(
-                    red, green, blue, 1)  # use brown for trunk
+            fillet = fillets.add(filletInput)
 
-                # and color the body with this new material
-                trunkBody.appearance = newAppear
+            i = i+1
 
-                # ---------------------------
-                # Update progress value of progress dialog
-                progressDialog.progressValue = progress+progressIncrement
-                # ---------------------------
+            # ---------------------------
+            # Update progress value of progress dialog
+            progressDialog.progressValue = progress+progressIncrement
+            # ---------------------------
 
-                # add the base for the trunk
-                trunkBaseSketch = sketches.add(xyPlane)
+        global forProgressTotal
+        forProgressTotal = 4**(recursionDepthValue)
 
-                # Get the SketchCircles collection from an existing sketch.
-                trunkBaseCircles = trunkBaseSketch.sketchCurves.sketchCircles
+        branchFactor = 0
 
-                # circle on sketch
-                trunkBase = trunkBaseCircles.addByCenterRadius(
-                    pointForTreestart, 2*donutThickness)
-                # get profile
-                trunkBaseProf = trunkBaseSketch.profiles.item(i)
-                # create input object
-                trunkBaseExtInput = extrudes.createInput(
-                    trunkBaseProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-                # extrude the cirlce by treeheight amount
-                trunkBaseDist = adsk.core.ValueInput.createByReal(1)
-                trunkBaseExtInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
-                    trunkBaseDist), adsk.fusion.ExtentDirections.NegativeExtentDirection)
-                trunkBaseExtInput.isSolid = True
-                # add body
-                trunkBaseExt = extrudes.add(trunkBaseExtInput)
-                # get body
-                trunkBaseBody = trunkBaseExt.bodies.item(i)
+        callSplit(face, donutThickness, axis,
+                  recursionDepthValue, newAppear, branchFactor, branchingAngle)
 
-                # ---------------------------
-                # Update progress value of progress dialog
-                progressDialog.progressValue = progress+progressIncrement
-                # ---------------------------
-
-                # Get one face and edge of the extrusion body
-                #face = extrudes.endFaces.item(0)
-                # print("extrudes")
-                # print(face.objectType)
-                # exttudes has no endfaces
-                #face = extInput.endFaces.item(0)
-                # print("extInput")
-                # print(face.objectType)
-                # has no endfaces
-                # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead ::: face = ext.faces.item(1) :::this worked
-                face = ext.endFaces.item(0)
-                # print("ext")
-                # print(face.objectType)
-                # print(face.area)
-                # print(face.geometry)
-                # print(face.evaluator)
-                # print(face.body)
-                # print(face.attributes)
-                #edge = face.edges.item(0)
-
-                # Create a slant construction plane with an angle of 45 deg on the xZConstructionPlane
-                #planeInput = rootComp.constructionPlanes.createInput()
-                #planeInput.setByAngle(edge, adsk.core.ValueInput.createByString('45 deg'), rootComp.xZConstructionPlane)
-                #plane = rootComp.constructionPlanes.add(planeInput)
-
-                # Create another sketch containing a circle profile on the slant plane
-                #toolSketch = rootComp.sketches.add(plane)
-                #sketchCircles = toolSketch.sketchCurves.sketchCircles
-                #circle = sketchCircles.addByCenterRadius(point0, 3)
-
-                # Create a sketch.
-                #sketchOnCylinder = sketches.add(face)
-                #surface = ext.faces.item(0)
-                # print(surface.objectType)
-
-                #centerPoint = face.centroid
-                # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead
-                sk = rootComp.sketches.add(face)
-                #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
-
-                # combine trunk and trunkbase
-                TargetBody = trunkBody
-
-                ToolBodies = adsk.core.ObjectCollection.create()
-                ToolBodies.add(trunkBaseBody)
-
-                # print("ToolBodies.objectType")
-                # print(ToolBodies.objectType)
-
-                CombineCutInput = rootComp.features.combineFeatures.createInput(
-                    TargetBody, ToolBodies)
-
-                CombineCutFeats = rootComp.features.combineFeatures
-                CombineCutInput = CombineCutFeats.createInput(
-                    TargetBody, ToolBodies)
-                CombineCutFeats.add(CombineCutInput)
-
-                combinedTrunkEdges = trunkBody.edges
-                #print("combined edges")
-                # print(combinedTrunkEdges.count)
-                # print(combinedTrunkEdges.objectType)
-
-                chamferSize = adsk.core.ValueInput.createByReal(
-                    0.6*donutThickness)
-                # chamfersample
-                # prepare chamfer
-                #faces = sweep.faces
-                edges = adsk.core.ObjectCollection.create()
-                edges.add(combinedTrunkEdges.item(1))
-
-                chamfers = rootComp.features.chamferFeatures
-
-                chamferInput = chamfers.createInput(edges, False)
-                chamferInput.setToEqualDistance(chamferSize)
-
-                chamfer = chamfers.add(chamferInput)
-
-                # define the edges anew after we have the new bod with chamfer
-                combinedTrunkEdges = trunkBody.edges
-                edges = adsk.core.ObjectCollection.create()
-                edges.add(combinedTrunkEdges.item(1))
-                # print(edges.count)
-
-                # fillet
-                fillets = rootComp.features.filletFeatures
-
-                filletInput = fillets.createInput()
-                filletSize = adsk.core.ValueInput.createByReal(0.5*treeHeight)
-                filletInput.addConstantRadiusEdgeSet(edges, filletSize, False)
-                # filletInput.isRollingBallCorner(True)
-
-                fillet = fillets.add(filletInput)
-
-                i = i+1
-
-                # ---------------------------
-                # Update progress value of progress dialog
-                progressDialog.progressValue = progress+progressIncrement
-                # ---------------------------
-
-
-            global forProgressTotal
-            forProgressTotal = 4**(recursionDepthValue)
-
-            branchFactor = 0
-
-            callSplit(face, donutThickness, axis,
-                      recursionDepthValue, newAppear, branchFactor, branchingAngle)
-
-            # in the end combine objects to one
-            # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
-            # close program and start again. does fusion keep the material names that we created last time or does it store them internally
-            # to create unique handle if needed: combination of all random values
-            # hasan: color to body itself
-            # simon: randomize integration with ui
+        # in the end combine objects to one
+        # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
+        # close program and start again. does fusion keep the material names that we created last time or does it store them internally
+        # to create unique handle if needed: combination of all random values
+        # hasan: color to body itself
+        # simon: randomize integration with ui
 
         # Hide the progress dialog at the end.
         progressDialog.hide()
