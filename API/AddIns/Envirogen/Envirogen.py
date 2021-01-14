@@ -93,6 +93,9 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Tree size', 5, 30, 1, 10)
 
+        recursionDepth = inputs.addIntegerSpinnerCommandInput(
+            'recursionDepth', 'Recursion Depth', 0, 5, 1, 3)
+
         # Create a check box to get if high cusomizability is desired
         highCustomizability = inputs.addBoolValueInput('highCustomizability', 'Customize tree',
                                                        True, '', False)
@@ -214,6 +217,9 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         #turn the integer into a rad value betweeen 0.5 to 1.0
         print("got Branchingvalue")
 
+
+        recursionDepthValue = inputs.itemById('recursionDepth').value
+
         # GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
        # selectedSurfaceInput = inputs.itemById('surfaceInput')
         # next line is okay, debugging shows that the count is 1 as expected. don't know why next line code stops
@@ -245,7 +251,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
 
         # call the method to create the tree
         createDonuts(donutThickness, treeHeight,
-                     leavesRadius, selectedBRepFace, branchingAngle)
+                     leavesRadius, selectedBRepFace, branchingAngle, recursionDepthValue)
 
         # ui.messageBox('function createDonuts is completed')
 
@@ -300,7 +306,7 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
 # donutThickness radius of the rings
 # treeHeight height of the tree
 # leavesRadius radius of the treetop
-def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, branchingAngle):
+def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, branchingAngle, recursionDepthValue):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -320,8 +326,9 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
         progressDialog.isCancelButtonShown = True
 
         progressMin = 0
-        progressMax = 5
+        progressMax = 1
         progressIncrement = 1
+        #WHS THIS? ALL THIS DOES IS MAKE THE PROGRAMM EXECUTE THE WHOLE CODE 5 TIMES
 
         # Show dialog
         progressDialog.show(
@@ -575,15 +582,14 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
                 progressDialog.progressValue = progress+progressIncrement
                 # ---------------------------
 
-            totalDepth = 2
 
             global forProgressTotal
-            forProgressTotal = 4**(totalDepth)
+            forProgressTotal = 4**(recursionDepthValue)
 
             branchFactor = 0
 
             callSplit(face, donutThickness, axis,
-                      totalDepth, newAppear, branchFactor, branchingAngle)
+                      recursionDepthValue, newAppear, branchFactor, branchingAngle)
 
             # in the end combine objects to one
             # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
