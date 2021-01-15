@@ -640,9 +640,31 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
 
 
         branchFactor = 0
+        
+        #call for add leaves because the size of the canopy is otherwise too big at recursion level 0
+        if recursionDepthValue == 0:
+            extInput = extrudes.createInput(
+            face, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
-        callSplit(face, donutThickness, axis,
-                  recursionDepthValue, newAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+            # extrude the cirlce by treeheight amount
+
+            dist = adsk.core.ValueInput.createByReal(treeHeight)
+            extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+                dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
+            extInput.isSolid = True
+
+            # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
+            #rev = revolves.add(revInput)
+            # NEW
+            ext2 = extrudes.add(extInput)
+            face = ext2.endFaces.item(0)
+            ext2.bodies.item(0).appearance = newAppear
+
+
+            addLeaves(face, donutThickness*5, yellowAppear, progressDialog, chaosValue)
+        else:
+            callSplit(face, donutThickness, axis,
+                      recursionDepthValue, newAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
 
         #reset the progresscounter after the tree is finished for the nex time a tree is created
         global progresscounter
