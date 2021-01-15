@@ -343,8 +343,11 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
         progressDialog.isBackgroundTranslucent = False
         progressDialog.isCancelButtonShown = True
 
+        global forProgressTotal
+        forProgressTotal = 4**(recursionDepthValue)
+
         progressMin = 0
-        progressMax = 5
+        progressMax = forProgressTotal
         progressIncrement = 1
         progress = 0
         # WHS THIS? ALL THIS DOES IS MAKE THE PROGRAMM EXECUTE THE WHOLE CODE 5 TIMES
@@ -430,7 +433,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
 
             # ---------------------------
             # Update progress value of progress dialog
-            progressDialog.progressValue = progress+progressIncrement
+        #    progressDialog.progressValue = progress+progressIncrement
             # ---------------------------
 
             # print(extrudes.endFaces.count)
@@ -468,7 +471,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
 
             # ---------------------------
             # Update progress value of progress dialog
-            progressDialog.progressValue = progress+progressIncrement
+        #    progressDialog.progressValue = progress+progressIncrement
             # ---------------------------
 
             # add the base for the trunk
@@ -497,7 +500,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
 
             # ---------------------------
             # Update progress value of progress dialog
-            progressDialog.progressValue = progress+progressIncrement
+        #    progressDialog.progressValue = progress+progressIncrement
             # ---------------------------
 
             # Get one face and edge of the extrusion body
@@ -597,16 +600,19 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
 
             # ---------------------------
             # Update progress value of progress dialog
-            progressDialog.progressValue = progress+progressIncrement
+        #    progressDialog.progressValue = progress+progressIncrement
             # ---------------------------
 
-        global forProgressTotal
-        forProgressTotal = 4**(recursionDepthValue)
+
 
         branchFactor = 0
 
         callSplit(face, donutThickness, axis,
-                  recursionDepthValue, newAppear, branchFactor, branchingAngle)
+                  recursionDepthValue, newAppear, branchFactor, branchingAngle, progressDialog)
+
+        #reset the progresscounter after the tree is finished for the nex time a tree is created
+        global progresscounter
+        progresscounter = 0
 
         # in the end combine objects to one
         # color the bodys by actual reference instead of getting the number from the total bodies. will create issues with existing bodies
@@ -623,7 +629,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle):
+def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle, progressDialog):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -751,7 +757,7 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
             loftbody.appearance = yellowAppear
 
             callSplit(topFace, branchWidth, axis,
-                      depth, yellowAppear, branchFactor, branchingAngle)
+                      depth, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
             # print("Depth")
             # print(depth)
@@ -768,7 +774,7 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
 # actually makes the recursive calls for the function and
 # calculates the random values and angles
 # if branchFactor == 0, it will select a random between 3, 4 and 5
-def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle):
+def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle, progressDialog):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -778,7 +784,7 @@ def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor, branch
 
         if depth == 0:
             leavSize = branchWidth*5
-            addLeaves(face, leavSize, yellowAppear)
+            addLeaves(face, leavSize, yellowAppear, progressDialog)
         else:
 
             if branchFactor == 0:
@@ -789,82 +795,82 @@ def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor, branch
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(1.0, -0.577, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-1, -0.577, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
             if branchDecision == 4:
                 thickFactor = random.uniform(0.5, 0.8)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(axis1, 0.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, axis1, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, -axis1, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-axis1, 0.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
             if branchDecision == 5:
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(1.0, 0.325, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-1, 0.325, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.727, -1.0, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
                 thickFactor = random.uniform(0.5, 0.8)
                 #axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-0.727, -1, 0.0)
                 recursiveBranching(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog)
 
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-def addLeaves(face, leavesRadius, yellowAppear):
+def addLeaves(face, leavesRadius, yellowAppear, progressDialog):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -920,13 +926,19 @@ def addLeaves(face, leavesRadius, yellowAppear):
             # print(newAppear.appearanceProperties.itemByName('Color'))
             leavestocolor.appearance = newAppear
 
-            circleTest(leavestocolor, leavesRadius, centerPoint)
+            #circleTest(leavestocolor, leavesRadius, centerPoint)
 
             baseFeat.finishEdit()
 
             global progresscounter
             progresscounter = progresscounter + 1
             print(str(progresscounter) + '/' + str(forProgressTotal))
+
+
+            # ---------------------------
+            # Update progress value of progress dialog
+            progressDialog.progressValue = progresscounter
+            # ---------------------------
 
     except:
         if ui:
