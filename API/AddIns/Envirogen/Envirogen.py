@@ -267,8 +267,14 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         forselectioninputs = eventArgs.firingEvent.sender.commandInputs
         selectionInput = forselectioninputs.itemById('surfaceInput')
 
-        # (selectionInput.selection(0).entity.objectType)
-        selectedBRepFace = selectionInput.selection(0).entity
+
+
+        if selectionInput.selectionCount== 0:
+            # (selectionInput.selection(0).entity.objectType)
+            pointForTreestart = adsk.core.Point3D.create(0, 0, 0)
+        else:
+            selectedBRepFace = selectionInput.selection(0).entity
+            pointForTreestart = selectedBRepFace.centroid
 
         # assign values to random values based on either base size or selected ranges if high customizability is desired
         if hasHighCustomizability:
@@ -297,7 +303,7 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         leavesRadius = treeHeight*0.1
         # call the method to create the tree
         createDonuts(donutThickness, treeHeight,
-                     leavesRadius, selectedBRepFace, branchingAngle, recursionDepthValue, chaosValue)
+                     leavesRadius, pointForTreestart, branchingAngle, recursionDepthValue, chaosValue)
 
         # ui.messageBox('function createDonuts is completed')
 
@@ -358,7 +364,7 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
 # donutThickness radius of the rings
 # treeHeight height of the tree
 # leavesRadius radius of the treetop
-def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, branchingAngle, recursionDepthValue, chaosValue):
+def createDonuts(donutThickness, treeHeight, leavesRadius, pointForTreestart, branchingAngle, recursionDepthValue, chaosValue):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
@@ -430,7 +436,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, selectedBRepFace, bra
         i = 0
         while i <= (0):
 
-            pointForTreestart = selectedBRepFace.centroid
+
 
             # new tree
             # Call an add method on the collection to create a new circle.
