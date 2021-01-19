@@ -11,26 +11,24 @@ handlers = []
 progresscounter = 0
 forProgressTotal = 0
 
-
+#Gets called initially, everything else will be called from here or is a handler etc
 def run(context):
     ui = None
     try:
         app = adsk.core.Application.get()
         ui = app.userInterface
-        #ui.messageBox('In run function')
-
 
         # Get the CommandDefinitions collection.
         cmdDefs = ui.commandDefinitions
 
         # Create a button command definition.
-        buttonSample = cmdDefs.addButtonDefinition('NewButtonDefIdPython',
+        buttonSample = cmdDefs.addButtonDefinition('EnviroGenDefIdPython',
                                                    'EnviroGen',
-                                                   'Generate new enviromental assets, such as trees with the ease of a click',
+                                                   'Generate a different looking tree every time with the ease of a click',
                                                    './resources/Button')
 
         # Connect to the command created event.
-        sampleCommandCreated = SampleCommandCreatedEventHandler()
+        sampleCommandCreated = CommandCreatedEventHandler()
         buttonSample.commandCreated.add(sampleCommandCreated)
         handlers.append(sampleCommandCreated)
 
@@ -51,19 +49,19 @@ def run(context):
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
-
+#clean up the UI when we stop the add in from the add ins menu
 def stop(context):
     try:
         app = adsk.core.Application.get()
         ui = app.userInterface
 
         # Clean up the UI.
-        cmdDef = ui.commandDefinitions.itemById('NewButtonDefIdPython')
+        cmdDef = ui.commandDefinitions.itemById('EnviroGenDefIdPython')
         if cmdDef:
             cmdDef.deleteMe()
 
         addinsPanel = ui.allToolbarPanels.itemById('SolidCreatePanel')
-        cntrl = addinsPanel.controls.itemById('NewButtonDefIdPython')
+        cntrl = addinsPanel.controls.itemById('EnviroGenDefIdPython')
         if cntrl:
             cntrl.deleteMe()
     except:
@@ -72,7 +70,7 @@ def stop(context):
 
 
 # Event handler for the commandCreated event.
-class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
+class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
     def __init__(self):
         super().__init__()
 
@@ -85,17 +83,14 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
         # Create a selection input.
         selectionInput = inputs.addSelectionInput(
-            'surfaceInput', 'Select', 'Basic select command input')
+            'surfaceInput', 'Tree location', 'Select a construction point or Vertex to create the tree at. \nIf a Surface is selected, the tree will be placed at its center. \nOtherwise the default position is (0,0,0)')
         selectionInput.setSelectionLimits(0, 1)
         selectionInput.addSelectionFilter('Faces')
         selectionInput.addSelectionFilter('ConstructionPoints')
         selectionInput.addSelectionFilter('Vertices')
-        
-        
-        # selectionInput.addSelectionFilter('ConstructionPlanes')
         selectionInput.isFullWidth = False
 
-        # Create the value input to get the bbase size of the Tree
+        # Create the value input to get the base size of the Tree
         baseSize = inputs.addIntegerSpinnerCommandInput(
             'baseSize', 'Tree size', 5, 30, 1, 10)
         baseSize.isFullWidth = False
@@ -104,48 +99,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         highCustomizability = inputs.addBoolValueInput('highCustomizability', 'Customize tree',
                                                        True, '', False)
 
-        # Create the slider to get the thickness setting the range of the slider to
-        # be 10 to 20 of whatever the current document unit is.
-        app = adsk.core.Application.get()
-        des = adsk.fusion.Design.cast(app.activeProduct)
 
-        minVal = des.unitsManager.convert(
-            10, des.unitsManager.defaultLengthUnits, 'mm')
-        maxVal = des.unitsManager.convert(
-            20, des.unitsManager.defaultLengthUnits, 'mm')
-        thickness = inputs.addIntegerSliderCommandInput('thickness',
-                                                        'Trunk thickness',
-
-                                                        10, 20, True)
-        thickness.isVisible = False
-
-        # Create the slider to get the length setting the range of the slider to
-        # be 100 to 200 of whatever the current document unit is.
-        minVal = des.unitsManager.convert(
-            100, des.unitsManager.defaultLengthUnits, 'mm')
-        maxVal = des.unitsManager.convert(
-            200, des.unitsManager.defaultLengthUnits, 'mm')
-        treeHeight = inputs.addIntegerSliderCommandInput('height',
-                                                         'Trunk height',
-
-                                                         100, 200, True)
-        # des.unitsManager.defaultLengthUnits,
-        treeHeight.isVisible = False
-
-        print("created the length slider")
-        print(inputs.count)
-
-        # Create the slider to get the treetop size range of the slider to
-        # be 30 to 60 of whatever the current document unit is.
-        minVal = des.unitsManager.convert(
-            10, des.unitsManager.defaultLengthUnits, 'mm')
-        maxVal = des.unitsManager.convert(
-            20, des.unitsManager.defaultLengthUnits, 'mm')
-        treetops = inputs.addIntegerSliderCommandInput('treetops',
-                                                       'Treetop diameter',
-
-                                                       30, 60, True)
-        treetops.isVisible = False
 
         # Create group input. Brnching Angle
         groupCmdInputAngle = inputs.addGroupCommandInput(
@@ -168,6 +122,7 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         branchingAngle.isFullWidth = True
         branchingAngle.valueOne = 7
 
+
         # Create group input. Depth of recursion
         groupCmdInputDepth = inputs.addGroupCommandInput(
             'Branching Depth Group', 'Branching Depth')
@@ -178,12 +133,9 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         branchingDepthImage = groupChildInputsDepth.addImageCommandInput(
             'image2', 'Image2', "resources/Graffle-Trees-Detail.png")
         branchingDepthImage.isFullWidth = True
-
         branchDepth = groupChildInputsDepth.addIntegerSliderCommandInput(
-            'recursionDepth', 'Recursion Depth', 0, 5)
-
+            'recursionDepth', 'Recursion Depth', 0, 4)
         branchDepth.isVisible = True
-        # branchDepth.setText("narrow","wide")
         branchDepth.isFullWidth = True
         branchDepth.valueOne = 2
 
@@ -199,8 +151,6 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         chaosImage = groupChildInputsChaos.addImageCommandInput(
             'imageChaos', 'ImageChaos', "resources/Graffle-Trees-Chaos.png")
         chaosImage.isFullWidth = True
-        # Create the slider to get the BranchingAngle
-        # be 30 to 60 of whatever the current document unit is.
         chaosValue = groupChildInputsChaos.addIntegerSliderCommandInput('chaosValue',
                                                                             'chaosValue',
 
@@ -214,18 +164,18 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
 
         # Connect to the execute event.
-        onExecute = SampleCommandExecuteHandler()
+        onExecute = CommandExecuteHandler()
         cmd.execute.add(onExecute)
         handlers.append(onExecute)
 
         # Connect to the inputChanged event.
-        onInputChanged = SampleCommandInputChangedHandler()
+        onInputChanged = CommandInputChangedHandler()
         cmd.inputChanged.add(onInputChanged)
         handlers.append(onInputChanged)
 
 
 # Event handler for the execute event.
-class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
+class CommandExecuteHandler(adsk.core.CommandEventHandler):
     def __init__(self):
         super().__init__()
 
@@ -235,47 +185,19 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
         # Code to react to the event.
         app = adsk.core.Application.get()
         ui = app.userInterface
-        #ui.messageBox('Ready for a Tree?')
 
         # Get the values from the command inputs.
         inputs = eventArgs.command.commandInputs
 
         hasHighCustomizability = inputs.itemById('highCustomizability').value
-
         baseSize = inputs.itemById('baseSize').value
-        print("base size")
-        print(baseSize)
-
-        donutMinThickness = inputs.itemById('thickness').valueOne
-        donutMaxThickness = inputs.itemById('thickness').valueTwo
-        print("donutMinThickness")
-        print(donutMinThickness)
-        print("donutMaxThickness")
-        print(donutMaxThickness)
-
-        treeMinHeight = inputs.itemById('height').valueOne
-        treeMaxHeight = inputs.itemById('height').valueTwo
-        print("got all values except leaves")
-
-        treetopsMin = inputs.itemById('treetops').valueOne
-        treetopsMax = inputs.itemById('treetops').valueTwo
-        print("got all values and treetops leaves")
-
-        # GETTING THE SURFACE DOESNT WORK, IT JUST DOESNT PRGORSS FROM HERE; WE HAD A SIMILAR PROBLEM BEFORE
-       # selectedSurfaceInput = inputs.itemById('surfaceInput')
-        # next line is okay, debugging shows that the count is 1 as expected. don't know why next line code stops
-       # if selectedSurface.selectionCount == 0:
-       #     selectedSurface = selectedSurfaceInput.selection(0).entity
-        #flache = input.itemById('surfaceInput').selection(0)
-        #print('nach dem input getten')
-
         forselectioninputs = eventArgs.firingEvent.sender.commandInputs
         selectionInput = forselectioninputs.itemById('surfaceInput')
 
 
-
+        #if nothing is selected create tree at origin(0,0,0)
+        #otherwise create it at the selected point or center of surface
         if selectionInput.selectionCount== 0:
-            # (selectionInput.selection(0).entity.objectType)
             pointForTreestart = adsk.core.Point3D.create(0, 0, 0)
         else:
             print(selectionInput.selection(0).entity.objectType) 
@@ -289,43 +211,33 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
                 pointForTreestart = point.geometry
                 
 
-        # assign values to random values based on either base size or selected ranges if high customizability is desired
+        #calculation thinckness and height of the tree and add some randomness
+        treeThickness = baseSize*2 + random.randint(0, round(baseSize))
+        treeHeight = baseSize*10 + random.randint(0, baseSize*3)
+
+
+        #assign user selected values to branching angle, depth and randomnes
         if hasHighCustomizability:
-            donutThickness = baseSize*2 + random.randint(0, round(baseSize))
-            treeHeight = baseSize*10 + random.randint(0, baseSize*3)
-            # i dont think we need the leavesradius here anymore
-            leavesRadius = baseSize*5 + random.randint(0, baseSize)
-            # selectedBRepFace is done elsewhere
             branchingAngle = inputs.itemById('branchingAngle').valueOne
+            #turn the integer into a rad value betweeen 0.5 to 1.0
             branchingAngle = branchingAngle/10
-            # turn the integer into a rad value betweeen 0.5 to 1.0
             recursionDepthValue = inputs.itemById('recursionDepth').valueOne
-
             chaosValue = inputs.itemById('chaosValue').valueOne
-
+        #otherwise use default values that give nice looking trees
         else:
-            donutThickness = baseSize*2 + random.randint(0, round(baseSize))
-            treeHeight = baseSize*10 + random.randint(0, baseSize*3)
-            # i dont think we need the leavesradius here anymore
-            leavesRadius = baseSize*5 + random.randint(0, baseSize)
-            # selectedBRepFace is done elsewhere
             branchingAngle = 0.75
             recursionDepthValue = 3
             chaosValue = 5
 
-        leavesRadius = treeHeight*0.1
         # call the method to create the tree
-        createDonuts(donutThickness, treeHeight,
-                     leavesRadius, pointForTreestart, branchingAngle, recursionDepthValue, chaosValue)
+        createDonuts(treeThickness, treeHeight,
+                      pointForTreestart, branchingAngle, recursionDepthValue, chaosValue)
 
-        # ui.messageBox('function createDonuts is completed')
 
-        # call mouseClick method
-        # mouseClick()
 
 
 # Event handler for the inputChanged event.
-class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
+class CommandInputChangedHandler(adsk.core.InputChangedEventHandler):
     def __init__(self):
         super().__init__()
 
@@ -336,86 +248,68 @@ class SampleCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
         changedInput = eventArgs.input
         if changedInput.id == 'highCustomizability':
             inputs = eventArgs.firingEvent.sender.commandInputs
-            scaleInput = inputs.itemById('heightScale')
 
             # get all inputs
-            thicknessInput = inputs.itemById('thickness')
-            heightInput = inputs.itemById('height')
-            treetopInput = inputs.itemById('treetops')
             angleGroup = inputs.itemById('Branching Angle Group')
             depthGroup = inputs.itemById('Branching Depth Group')
             chaosGroup = inputs.itemById('Chaos Group')
 
             # Change the visibility of the inputs related to high customizability
             if changedInput.value == True:
-                #thicknessInput.isVisible = True
-                #heightInput.isVisible = True
-                #treetopInput.isVisible = True
-                # these are not used anymore i think
                 angleGroup.isVisible = True
                 depthGroup.isVisible = True
                 chaosGroup.isVisible = True
             else:
-                thicknessInput.isVisible = False
-                heightInput.isVisible = False
-                treetopInput.isVisible = False
                 angleGroup.isVisible = False
                 depthGroup.isVisible = False
                 chaosGroup.isVisible = False
 
-        # for some reason acessing it from here works, but not from the execute command handler or the createDOnuts (if you save it here into a global variable)
+        #the selection input has to be gotten here, instead of in the input function
         if changedInput.id == 'surfaceInput':
             inputs = eventArgs.firingEvent.sender.commandInputs
             selectionInput = inputs.itemById('surfaceInput')
-
-            print(selectionInput.selection(0).entity.objectType)
+            #print(selectionInput.selection(0).entity.objectType)
             selectedBRepFace = selectionInput.selection(0).entity.objectType
 
 
 # This method contains the actual code to create the tree
 # arguments
-# donutThickness radius of the rings
-# treeHeight height of the tree
-# leavesRadius radius of the treetop
-def createDonuts(donutThickness, treeHeight, leavesRadius, pointForTreestart, branchingAngle, recursionDepthValue, chaosValue):
+# treeThickness radius of the treestump
+# treeHeight height of the treestump
+# pointForTreestart point at which the tree will be placed
+# branchinAngle how wide the branching will open
+# recursionDepthValue how many layers of recursion will be called
+# chaosValue how value will increase the randomness 
+def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, recursionDepthValue, chaosValue):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
 
     try:
-        # get the design  //selfmade
+        # get the design  
         design = adsk.fusion.Design.cast(app.activeProduct)
         if not design:
             ui.messageBox('No active Fusion 360 design', 'No Design')
             return
 
-        #try disabling timeline
-        #design.designType = adsk.fusion.DesignTypes.DirectDesignType
 
-
-        #------------------------------------------------#
         # Set styles of progress dialog.
         progressDialog = ui.createProgressDialog()
         progressDialog.cancelButtonText = 'Cancel'
         progressDialog.isBackgroundTranslucent = False
         progressDialog.isCancelButtonShown = True
 
+        #calculation of values for progress
         global forProgressTotal
         forProgressTotal = 5**(recursionDepthValue)
 
         progressMin = 0
         progressMax = forProgressTotal
         progressIncrement = 1
-        progress = 0
-        # WHS THIS? ALL THIS DOES IS MAKE THE PROGRAMM EXECUTE THE WHOLE CODE 5 TIMES
-
         # Show dialog
         progressDialog.show(
             'Progress Dialog', '     %p Percent: Finished %v of up to. %m branches     ', progressMin, progressMax, progressIncrement)
 
-
-
-        #-------------------------------------------------#
 
         # Get the root component of the active design.
         rootComp = design.rootComponent
@@ -434,7 +328,6 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, pointForTreestart, br
         # Get the RevolveFeatures collection.
         revolves = rootComp.features.revolveFeatures
 
-        # NEW
         # Get the ExtrudeFeatures collection.
         extrudes = rootComp.features.extrudeFeatures
 
@@ -447,216 +340,212 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, pointForTreestart, br
         libAppear.copyTo(design)
         yellowAppear = design.appearances.itemByName(libAppear.name)
 
-        # only one tree
-        i = 0
-        while i <= (0):
+        ###########################
+        # CODE REVIEW UNTIL HERE; TBC   
+        ###########################
+
+        # new tree
+        # Call an add method on the collection to create a new circle.
+        circle = circles.addByCenterRadius(
+            # adsk.core.Point3D.create(5*i, 0, 0), treeThickness)
+            pointForTreestart, treeThickness)
 
 
 
-            # new tree
-            # Call an add method on the collection to create a new circle.
-            circle = circles.addByCenterRadius(
-                # adsk.core.Point3D.create(5*i, 0, 0), donutThickness)
-                pointForTreestart, donutThickness)
+        # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
+        prof = sketch.profiles.item(0)
 
-            # Call an add method on the collection to create a new line.
-            axis = lines.addByTwoPoints(adsk.core.Point3D.create(
-                5*i-1, -4, 0), adsk.core.Point3D.create(5*i+1, -4, 0))
+        # Create a extrude input object that defines the input for a extrude feature.
+        # When creating the input object, required settings are provided as arguments.
+        #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+        # NEW
+        extInput = extrudes.createInput(
+            prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
-            # Get the first profile from the sketch, which will be the profile defined by the circle in this case.
-            prof = sketch.profiles.item(i)
+        # extrude the cirlce by treeheight amount
 
-            # Create a extrude input object that defines the input for a extrude feature.
-            # When creating the input object, required settings are provided as arguments.
-            #revInput = revolves.createInput(prof, axis, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-            # NEW
-            extInput = extrudes.createInput(
-                prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+        dist = adsk.core.ValueInput.createByReal(treeHeight)
+        extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+            dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
+        extInput.isSolid = True
 
-            # extrude the cirlce by treeheight amount
+        # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
+        #rev = revolves.add(revInput)
+        # NEW
+        ext = extrudes.add(extInput)
+        #ext = extrudes.addSimple()
 
-            dist = adsk.core.ValueInput.createByReal(treeHeight)
-            extInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
-                dist), adsk.fusion.ExtentDirections.PositiveExtentDirection)
-            extInput.isSolid = True
+        # ---------------------------
+        # Update progress value of progress dialog
+    #    progressDialog.progressValue = progress+progressIncrement
+        # ---------------------------
 
-            # Create the extrude by calling the add method on the ExtrudeFeatures collection and passing it the ExtrudeInput object.
-            #rev = revolves.add(revInput)
-            # NEW
-            ext = extrudes.add(extInput)
-            #ext = extrudes.addSimple()
+        # print(extrudes.endFaces.count)
+        # print(extrudes.endFaces.classType)
+        # print(extrudes.endFaces.objectType)
 
-            # ---------------------------
-            # Update progress value of progress dialog
-        #    progressDialog.progressValue = progress+progressIncrement
-            # ---------------------------
+        # get component collection
+        #comp = rev.parentComponent
 
-            # print(extrudes.endFaces.count)
-            # print(extrudes.endFaces.classType)
-            # print(extrudes.endFaces.objectType)
+        # used for debugging
+        # print(rev.objectType)
+        # print(libAppear.objectType)
+        # print(libAppear.name)
 
-            # get component collection
-            #comp = rev.parentComponent
+        # get the current body
+        # bodytocolor = rootComp.bRepBodies.item(i)
+        # just get the current trunk that we just extruded
+        trunkBody = ext.bodies.item(0)
 
-            # used for debugging
-            # print(rev.objectType)
-            # print(libAppear.objectType)
-            # print(libAppear.name)
+        # Create a copy of the existing appearance.
+        newAppear = design.appearances.addByCopy(
+            yellowAppear, 'Color ' + str(1))
 
-            # get the current body
-            # bodytocolor = rootComp.bRepBodies.item(i)
-            # just get the current trunk that we just extruded
-            trunkBody = ext.bodies.item(i)
+        # Edit the "Color" property by setting it to a random brown color.
+        colorProp = adsk.core.ColorProperty.cast(
+            newAppear.appearanceProperties.itemByName('Color'))
+        red = random.randint(100, 180)
+        green = random.randint(50, 90)
+        blue = random.randint(0, 20)
+        colorProp.value = adsk.core.Color.create(
+            red, green, blue, 1)  # use brown for trunk
 
-            # Create a copy of the existing appearance.
-            newAppear = design.appearances.addByCopy(
-                yellowAppear, 'Color ' + str(i+1))
+        # and color the body with this new material
+        trunkBody.appearance = newAppear
 
-            # Edit the "Color" property by setting it to a random brown color.
-            colorProp = adsk.core.ColorProperty.cast(
-                newAppear.appearanceProperties.itemByName('Color'))
-            red = random.randint(100, 180)
-            green = random.randint(50, 90)
-            blue = random.randint(0, 20)
-            colorProp.value = adsk.core.Color.create(
-                red, green, blue, 1)  # use brown for trunk
+        # ---------------------------
+        # Update progress value of progress dialog
+    #    progressDialog.progressValue = progress+progressIncrement
+        # ---------------------------
 
-            # and color the body with this new material
-            trunkBody.appearance = newAppear
+        # add the base for the trunk
+        trunkBaseSketch = sketches.add(xyPlane)
 
-            # ---------------------------
-            # Update progress value of progress dialog
-        #    progressDialog.progressValue = progress+progressIncrement
-            # ---------------------------
+        # Get the SketchCircles collection from an existing sketch.
+        trunkBaseCircles = trunkBaseSketch.sketchCurves.sketchCircles
 
-            # add the base for the trunk
-            trunkBaseSketch = sketches.add(xyPlane)
+        # circle on sketch
+        trunkBase = trunkBaseCircles.addByCenterRadius(
+            pointForTreestart, 2*treeThickness)
+        # get profile
+        trunkBaseProf = trunkBaseSketch.profiles.item(0)
+        # create input object
+        trunkBaseExtInput = extrudes.createInput(
+            trunkBaseProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+        # extrude the cirlce by treeheight amount
+        trunkBaseDist = adsk.core.ValueInput.createByReal(1)
+        trunkBaseExtInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
+            trunkBaseDist), adsk.fusion.ExtentDirections.NegativeExtentDirection)
+        trunkBaseExtInput.isSolid = True
+        # add body
+        trunkBaseExt = extrudes.add(trunkBaseExtInput)
+        # get body
+        trunkBaseBody = trunkBaseExt.bodies.item(0)
 
-            # Get the SketchCircles collection from an existing sketch.
-            trunkBaseCircles = trunkBaseSketch.sketchCurves.sketchCircles
+        # ---------------------------
+        # Update progress value of progress dialog
+    #    progressDialog.progressValue = progress+progressIncrement
+        # ---------------------------
 
-            # circle on sketch
-            trunkBase = trunkBaseCircles.addByCenterRadius(
-                pointForTreestart, 2*donutThickness)
-            # get profile
-            trunkBaseProf = trunkBaseSketch.profiles.item(i)
-            # create input object
-            trunkBaseExtInput = extrudes.createInput(
-                trunkBaseProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-            # extrude the cirlce by treeheight amount
-            trunkBaseDist = adsk.core.ValueInput.createByReal(1)
-            trunkBaseExtInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
-                trunkBaseDist), adsk.fusion.ExtentDirections.NegativeExtentDirection)
-            trunkBaseExtInput.isSolid = True
-            # add body
-            trunkBaseExt = extrudes.add(trunkBaseExtInput)
-            # get body
-            trunkBaseBody = trunkBaseExt.bodies.item(i)
+        # Get one face and edge of the extrusion body
+        #face = extrudes.endFaces.item(0)
+        # print("extrudes")
+        # print(face.objectType)
+        # exttudes has no endfaces
+        #face = extInput.endFaces.item(0)
+        # print("extInput")
+        # print(face.objectType)
+        # has no endfaces
+        # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead ::: face = ext.faces.item(1) :::this worked
+        face = ext.endFaces.item(0)
+        # print("ext")
+        # print(face.objectType)
+        # print(face.area)
+        # print(face.geometry)
+        # print(face.evaluator)
+        # print(face.body)
+        # print(face.attributes)
+        #edge = face.edges.item(0)
 
-            # ---------------------------
-            # Update progress value of progress dialog
-        #    progressDialog.progressValue = progress+progressIncrement
-            # ---------------------------
+        # Create a slant construction plane with an angle of 45 deg on the xZConstructionPlane
+        #planeInput = rootComp.constructionPlanes.createInput()
+        #planeInput.setByAngle(edge, adsk.core.ValueInput.createByString('45 deg'), rootComp.xZConstructionPlane)
+        #plane = rootComp.constructionPlanes.add(planeInput)
 
-            # Get one face and edge of the extrusion body
-            #face = extrudes.endFaces.item(0)
-            # print("extrudes")
-            # print(face.objectType)
-            # exttudes has no endfaces
-            #face = extInput.endFaces.item(0)
-            # print("extInput")
-            # print(face.objectType)
-            # has no endfaces
-            # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead ::: face = ext.faces.item(1) :::this worked
-            face = ext.endFaces.item(0)
-            # print("ext")
-            # print(face.objectType)
-            # print(face.area)
-            # print(face.geometry)
-            # print(face.evaluator)
-            # print(face.body)
-            # print(face.attributes)
-            #edge = face.edges.item(0)
+        # Create another sketch containing a circle profile on the slant plane
+        #toolSketch = rootComp.sketches.add(plane)
+        #sketchCircles = toolSketch.sketchCurves.sketchCircles
+        #circle = sketchCircles.addByCenterRadius(point0, 3)
 
-            # Create a slant construction plane with an angle of 45 deg on the xZConstructionPlane
-            #planeInput = rootComp.constructionPlanes.createInput()
-            #planeInput.setByAngle(edge, adsk.core.ValueInput.createByString('45 deg'), rootComp.xZConstructionPlane)
-            #plane = rootComp.constructionPlanes.add(planeInput)
+        # Create a sketch.
+        #sketchOnCylinder = sketches.add(face)
+        #surface = ext.faces.item(0)
+        # print(surface.objectType)
 
-            # Create another sketch containing a circle profile on the slant plane
-            #toolSketch = rootComp.sketches.add(plane)
-            #sketchCircles = toolSketch.sketchCurves.sketchCircles
-            #circle = sketchCircles.addByCenterRadius(point0, 3)
+        #centerPoint = face.centroid
+        # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead
+        sk = rootComp.sketches.add(face)
+        #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
 
-            # Create a sketch.
-            #sketchOnCylinder = sketches.add(face)
-            #surface = ext.faces.item(0)
-            # print(surface.objectType)
+        # combine trunk and trunkbase
+        TargetBody = trunkBody
 
-            #centerPoint = face.centroid
-            # adds the sketch. sometimes however face is the cylinder instead of the flat face. maybe use endFace istead
-            sk = rootComp.sketches.add(face)
-            #neueSphere = adsk.core.Sphere.create(centerPoint, 10)
+        ToolBodies = adsk.core.ObjectCollection.create()
+        ToolBodies.add(trunkBaseBody)
 
-            # combine trunk and trunkbase
-            TargetBody = trunkBody
+        # print("ToolBodies.objectType")
+        # print(ToolBodies.objectType)
 
-            ToolBodies = adsk.core.ObjectCollection.create()
-            ToolBodies.add(trunkBaseBody)
+        CombineCutInput = rootComp.features.combineFeatures.createInput(
+            TargetBody, ToolBodies)
 
-            # print("ToolBodies.objectType")
-            # print(ToolBodies.objectType)
+        CombineCutFeats = rootComp.features.combineFeatures
+        CombineCutInput = CombineCutFeats.createInput(
+            TargetBody, ToolBodies)
+        CombineCutFeats.add(CombineCutInput)
 
-            CombineCutInput = rootComp.features.combineFeatures.createInput(
-                TargetBody, ToolBodies)
+        combinedTrunkEdges = trunkBody.edges
+        #print("combined edges")
+        # print(combinedTrunkEdges.count)
+        # print(combinedTrunkEdges.objectType)
 
-            CombineCutFeats = rootComp.features.combineFeatures
-            CombineCutInput = CombineCutFeats.createInput(
-                TargetBody, ToolBodies)
-            CombineCutFeats.add(CombineCutInput)
+        chamferSize = adsk.core.ValueInput.createByReal(
+            0.6*treeThickness)
+        # chamfersample
+        # prepare chamfer
+        #faces = sweep.faces
+        edges = adsk.core.ObjectCollection.create()
+        edges.add(combinedTrunkEdges.item(1))
 
-            combinedTrunkEdges = trunkBody.edges
-            #print("combined edges")
-            # print(combinedTrunkEdges.count)
-            # print(combinedTrunkEdges.objectType)
+        chamfers = rootComp.features.chamferFeatures
 
-            chamferSize = adsk.core.ValueInput.createByReal(
-                0.6*donutThickness)
-            # chamfersample
-            # prepare chamfer
-            #faces = sweep.faces
-            edges = adsk.core.ObjectCollection.create()
-            edges.add(combinedTrunkEdges.item(1))
+        chamferInput = chamfers.createInput(edges, False)
+        chamferInput.setToEqualDistance(chamferSize)
 
-            chamfers = rootComp.features.chamferFeatures
+        chamfer = chamfers.add(chamferInput)
 
-            chamferInput = chamfers.createInput(edges, False)
-            chamferInput.setToEqualDistance(chamferSize)
+        # define the edges anew after we have the new bod with chamfer
+        combinedTrunkEdges = trunkBody.edges
+        edges = adsk.core.ObjectCollection.create()
+        edges.add(combinedTrunkEdges.item(1))
+        # print(edges.count)
 
-            chamfer = chamfers.add(chamferInput)
+        # fillet
+        fillets = rootComp.features.filletFeatures
 
-            # define the edges anew after we have the new bod with chamfer
-            combinedTrunkEdges = trunkBody.edges
-            edges = adsk.core.ObjectCollection.create()
-            edges.add(combinedTrunkEdges.item(1))
-            # print(edges.count)
+        filletInput = fillets.createInput()
+        filletSize = adsk.core.ValueInput.createByReal(0.5*treeHeight)
+        filletInput.addConstantRadiusEdgeSet(edges, filletSize, False)
+        # filletInput.isRollingBallCorner(True)
 
-            # fillet
-            fillets = rootComp.features.filletFeatures
+        fillet = fillets.add(filletInput)
 
-            filletInput = fillets.createInput()
-            filletSize = adsk.core.ValueInput.createByReal(0.5*treeHeight)
-            filletInput.addConstantRadiusEdgeSet(edges, filletSize, False)
-            # filletInput.isRollingBallCorner(True)
 
-            fillet = fillets.add(filletInput)
 
-            i = i+1
-
-            # ---------------------------
-            # Update progress value of progress dialog
-        #    progressDialog.progressValue = progress+progressIncrement
-            # ---------------------------
+        # ---------------------------
+        # Update progress value of progress dialog
+    #    progressDialog.progressValue = progress+progressIncrement
+        # ---------------------------
 
 
 
@@ -682,9 +571,9 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, pointForTreestart, br
             ext2.bodies.item(0).appearance = newAppear
 
 
-            addLeaves(face, donutThickness*5, yellowAppear, progressDialog, chaosValue)
+            addLeaves(face, treeThickness*5, yellowAppear, progressDialog, chaosValue)
         else:
-            callSplit(face, donutThickness, axis,
+            callSplit(face, treeThickness,
                       recursionDepthValue, newAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
 
         #reset the progresscounter after the tree is finished for the nex time a tree is created
@@ -841,7 +730,7 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
             loftbody = loftbodies.bodies.item(0)
             loftbody.appearance = yellowAppear
 
-            callSplit(topFace, branchWidth, axis,
+            callSplit(topFace, branchWidth,
                       depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
 
             # print("Depth")
@@ -859,7 +748,7 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
 # actually makes the recursive calls for the function and
 # calculates the random values and angles
 # if branchFactor == 0, it will select a random between 3, 4 and 5
-def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue):
+def callSplit(face, branchWidth, depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue):
     app = adsk.core.Application.get()
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
