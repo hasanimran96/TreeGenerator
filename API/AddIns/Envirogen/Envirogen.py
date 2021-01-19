@@ -19,6 +19,7 @@ def run(context):
         ui = app.userInterface
         #ui.messageBox('In run function')
 
+
         # Get the CommandDefinitions collection.
         cmdDefs = ui.commandDefinitions
 
@@ -388,6 +389,10 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, pointForTreestart, br
             ui.messageBox('No active Fusion 360 design', 'No Design')
             return
 
+        #try disabling timeline
+        #design.designType = adsk.fusion.DesignTypes.DirectDesignType
+
+
         #------------------------------------------------#
         # Set styles of progress dialog.
         progressDialog = ui.createProgressDialog()
@@ -396,7 +401,7 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, pointForTreestart, br
         progressDialog.isCancelButtonShown = True
 
         global forProgressTotal
-        forProgressTotal = 4**(recursionDepthValue)
+        forProgressTotal = 5**(recursionDepthValue)
 
         progressMin = 0
         progressMax = forProgressTotal
@@ -406,11 +411,9 @@ def createDonuts(donutThickness, treeHeight, leavesRadius, pointForTreestart, br
 
         # Show dialog
         progressDialog.show(
-            'Progress Dialog', '     %p Percent: Finished %v of est. %m branches     ', progressMin, progressMax, progressIncrement)
+            'Progress Dialog', '     %p Percent: Finished %v of up to. %m branches     ', progressMin, progressMax, progressIncrement)
 
-        # If progress dialog is cancelled, stop drawing.
-        # if progressDialog.wasCancelled:
-        #     return
+
 
         #-------------------------------------------------#
 
@@ -708,6 +711,12 @@ def recursiveBranching(face,  branchWidth, axis, depth, yellowAppear, branchFact
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
 
+
+    #If progress dialog is cancelled, stop drawing.
+    if progressDialog.wasCancelled:
+        return
+
+
     try:
         # get the design  //selfmade
         design = adsk.fusion.Design.cast(app.activeProduct)
@@ -855,6 +864,10 @@ def callSplit(face, branchWidth, axis, depth, yellowAppear, branchFactor, branch
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
 
+    #If progress dialog is cancelled, stop drawing.
+    if progressDialog.wasCancelled:
+        return
+
     try:
         branchDecision = branchFactor
 
@@ -952,6 +965,10 @@ def addLeaves(face, leavesRadius, yellowAppear, progressDialog, chaosValue):
     ui = app.userInterface
     #ui.messageBox('in createDonuts')
 
+    #If progress dialog is cancelled, stop drawing.
+    if progressDialog.wasCancelled:
+        return
+
     try:
         # get the design  //selfmade
         design = adsk.fusion.Design.cast(app.activeProduct)
@@ -1016,6 +1033,8 @@ def addLeaves(face, leavesRadius, yellowAppear, progressDialog, chaosValue):
             # Update progress value of progress dialog
             progressDialog.progressValue = progresscounter
             # ---------------------------
+
+
 
     except:
         if ui:
