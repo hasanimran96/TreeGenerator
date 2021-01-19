@@ -87,6 +87,10 @@ class SampleCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             'surfaceInput', 'Select', 'Basic select command input')
         selectionInput.setSelectionLimits(0, 1)
         selectionInput.addSelectionFilter('Faces')
+        selectionInput.addSelectionFilter('ConstructionPoints')
+        selectionInput.addSelectionFilter('Vertices')
+        
+        
         # selectionInput.addSelectionFilter('ConstructionPlanes')
         selectionInput.isFullWidth = False
 
@@ -273,8 +277,16 @@ class SampleCommandExecuteHandler(adsk.core.CommandEventHandler):
             # (selectionInput.selection(0).entity.objectType)
             pointForTreestart = adsk.core.Point3D.create(0, 0, 0)
         else:
-            selectedBRepFace = selectionInput.selection(0).entity
-            pointForTreestart = selectedBRepFace.centroid
+            print(selectionInput.selection(0).entity.objectType) 
+            if selectionInput.selection(0).entity.objectType == 'adsk::fusion::BRepFace':
+                selectedBRepFace = selectionInput.selection(0).entity
+                pointForTreestart = selectedBRepFace.centroid
+            if selectionInput.selection(0).entity.objectType == 'adsk::fusion::ConstructionPoint':
+                pointForTreestart = selectionInput.selection(0).entity.geometry
+            if selectionInput.selection(0).entity.objectType == 'adsk::fusion::BRepVertex':
+                point = selectionInput.selection(0).entity
+                pointForTreestart = point.geometry
+                
 
         # assign values to random values based on either base size or selected ranges if high customizability is desired
         if hasHighCustomizability:
