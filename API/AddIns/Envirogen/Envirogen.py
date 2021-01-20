@@ -91,13 +91,16 @@ class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         selectionInput.isFullWidth = False
 
         # Create the value input to get the base size of the Tree
-        baseSize = inputs.addIntegerSpinnerCommandInput(
-            'baseSize', 'Tree size', 5, 30, 1, 10)
+        baseSize = inputs.addFloatSpinnerCommandInput(
+            'baseSize', 'Tree size', 'm', 0.01, 100, 0.1, 10)
         baseSize.isFullWidth = False
+        baseSize.tooltip = 'Approximate size of the tree. \nIt might vary slightly due to the randomnes.'
+
 
         # Create a check box to get if high cusomizability is desired
         highCustomizability = inputs.addBoolValueInput('highCustomizability', 'Customize tree',
                                                        True, '', False)
+        highCustomizability.tooltip = 'Add options to customize the appearance of your tree.'
 
 
 
@@ -112,7 +115,6 @@ class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             'image', 'Image', "resources/Graffle-Trees.png")
         branchinAngleImage.isFullWidth = True
         # Create the slider to get the BranchingAngle
-        # be 30 to 60 of whatever the current document unit is.
         branchingAngle = groupChildInputsAngle.addIntegerSliderCommandInput('branchingAngle',
                                                                             'branchingAngle',
 
@@ -121,7 +123,8 @@ class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         branchingAngle.setText("narrow", "wide")
         branchingAngle.isFullWidth = True
         branchingAngle.valueOne = 7
-
+        branchingAngle.tooltip = 'Customize how wide the branches will split at each branching.'
+  
 
         # Create group input. Depth of recursion
         groupCmdInputDepth = inputs.addGroupCommandInput(
@@ -138,6 +141,7 @@ class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         branchDepth.isVisible = True
         branchDepth.isFullWidth = True
         branchDepth.valueOne = 2
+        branchDepth.tooltip = 'Customize how often each branch will split. \nThe higher the value, the more detailed the tree. \nWARNING: High values will increase the processing time.'
 
 
 
@@ -159,6 +163,9 @@ class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         chaosValue.setText("orderly", "irregular")
         chaosValue.isFullWidth = True
         chaosValue.valueOne = 5
+        chaosValue.tooltip = 'Customize how much variation the tree will have. \nOn a high setting, the trees will have more variation.'
+
+
 
 
 
@@ -212,8 +219,9 @@ class CommandExecuteHandler(adsk.core.CommandEventHandler):
                 
 
         #calculation thinckness and height of the tree and add some randomness
-        treeThickness = baseSize*2 + random.randint(0, round(baseSize))
-        treeHeight = baseSize*10 + random.randint(0, baseSize*3)
+        baseSize = baseSize/30 #to scale correctly to the actual size of the finished tree
+        treeThickness = baseSize*2 + random.uniform(0, baseSize)
+        treeHeight = baseSize*10 + random.uniform(0, baseSize*3)
 
 
         #assign user selected values to branching angle, depth and randomnes
@@ -226,7 +234,7 @@ class CommandExecuteHandler(adsk.core.CommandEventHandler):
         #otherwise use default values that give nice looking trees
         else:
             branchingAngle = 0.75
-            recursionDepthValue = 3
+            recursionDepthValue = 2
             chaosValue = 5
 
         # call the method to create the tree
@@ -397,8 +405,8 @@ def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, r
         trunkBaseExtInput = extrudes.createInput(
             trunkBaseProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
-        # extrude the cirlce by a small
-        trunkBaseDist = adsk.core.ValueInput.createByReal(1)
+        # extrude the cirlce by a small length
+        trunkBaseDist = adsk.core.ValueInput.createByReal(treeThickness/10)
         trunkBaseExtInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
             trunkBaseDist), adsk.fusion.ExtentDirections.NegativeExtentDirection)
         trunkBaseExtInput.isSolid = True
