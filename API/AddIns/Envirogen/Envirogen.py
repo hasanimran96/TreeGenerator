@@ -340,10 +340,6 @@ def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, r
         libAppear.copyTo(design)
         yellowAppear = design.appearances.itemByName(libAppear.name)
 
-        ###########################
-        # CODE REVIEW UNTIL HERE; TBC   
-        ###########################
-
         # new tree
         # Call an add method on the collection to create a new circle.
         circle = circles.addByCenterRadius(pointForTreestart, treeThickness)
@@ -487,7 +483,7 @@ def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, r
             ext2.bodies.item(0).appearance = newAppear
 
             #add the leaves with a different size, suitable to 0 recursion trees
-            addLeaves(face, treeThickness*4, yellowAppear, progressDialog, chaosValue)
+            addLeaves(face, treeThickness*4.5, yellowAppear, progressDialog, chaosValue)
         else:
             #for all other trees, pass the required values to the callSplit which will start the recursion
             callSplit(face, treeThickness,
