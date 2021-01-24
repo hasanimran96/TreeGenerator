@@ -128,7 +128,7 @@ class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
         # Create group input. Depth of recursion
         groupCmdInputDepth = inputs.addGroupCommandInput(
-            'Branching Depth Group', 'Branching Depth')
+            'Branching Depth Group', 'Detail Level')
         groupCmdInputDepth.isExpanded = False
         groupCmdInputDepth.isVisible = False
         groupCmdInputDepth.isEnabledCheckBoxDisplayed = False
@@ -137,7 +137,7 @@ class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             'image2', 'Image2', "resources/Graffle-Trees-Detail.png")
         branchingDepthImage.isFullWidth = True
         branchDepth = groupChildInputsDepth.addIntegerSliderCommandInput(
-            'recursionDepth', 'Recursion Depth', 0, 4)
+            'recursionDepth', 'Depth of branching', 0, 4)
         branchDepth.isVisible = True
         branchDepth.isFullWidth = True
         branchDepth.valueOne = 2
@@ -503,13 +503,37 @@ def createTree(treeThickness, treeHeight, pointForTreestart, branchingAngle, rec
             callSplit(face, treeThickness,
                       recursionDepthValue, newAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
+
+            #upscale all objects a tiny amount, because the combine feature sometimes wont recognize barely touching bodies 
+            # Create a scale input
+            #inputColl = adsk.core.ObjectCollection.create()
+            #inputColl.add(body)
+            
+            basePt = sketch.sketchPoints.item(0)
+            scaleFactor = adsk.core.ValueInput.createByReal(1.001)
+            
+            scales = rootComp.features.scaleFeatures
+            scaleInput = scales.createInput(BranchBodies, basePt, scaleFactor)
+            scale = scales.add(scaleInput)
+
+            trunkBodyColl = adsk.core.ObjectCollection.create()
+            trunkBodyColl.add(trunkBody)
+            scalesTrunk = rootComp.features.scaleFeatures
+            scaleInputTrunk = scalesTrunk.createInput(trunkBodyColl, basePt, scaleFactor)
+            scaleTrunk = scalesTrunk.add(scaleInputTrunk)
+        
+
+
             #actually add all branches to the trunk body, usual routine, create input object, feature and add
             BranchesCombineCutInput = rootComp.features.combineFeatures.createInput(
                 TargetBody, BranchBodies)
             BranchesCombineCutFeats = rootComp.features.combineFeatures
+            
             BranchesCombineCutInput = BranchesCombineCutFeats.createInput(
                 TargetBody, BranchBodies)
             BranchesCombineCutFeats.add(BranchesCombineCutInput)
+            #reset collection for next tree
+            BranchBodies = adsk.core.ObjectCollection.create()
 
         #reset the progresscounter after the tree is finished for the nex time a tree is created
         global progresscounter
@@ -535,6 +559,7 @@ def createTree(treeThickness, treeHeight, pointForTreestart, branchingAngle, rec
 #branchingAngle, how far will the extrusion be rotated
 #progressDialog, the process dialog object, must be handed down to the addleaves, where the progress is updated
 #chaosValue setting for how much variation will be added to all the parameters
+#BranchBodies the collection to add branches to which will later be combined to reduce amount of bodies
 def createBranch(face,  branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies):
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -670,7 +695,7 @@ def createBranch(face,  branchWidth, axis, depth, yellowAppear, branchFactor, br
 #branchingAngle, how far will the extrusion be rotated
 #progressDialog, the process dialog object, must be handed down to the addleaves, where the progress is updated
 #chaosValue setting for how much variation will be added to all the parameters
-
+#BranchBodies the collection to add branches to which will later be combined to reduce amount of bodies
 def callSplit(face, branchWidth, depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies):
     app = adsk.core.Application.get()
     ui = app.userInterface
