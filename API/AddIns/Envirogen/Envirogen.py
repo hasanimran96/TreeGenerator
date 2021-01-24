@@ -100,7 +100,7 @@ class CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
         # Create a check box to get if high cusomizability is desired
         highCustomizability = inputs.addBoolValueInput('highCustomizability', 'Customize tree',
                                                        True, '', False)
-        highCustomizability.tooltip = 'Add options to customize the appearance of your tree.'
+        highCustomizability.tooltip = 'Show options to customize the appearance of your tree.'
 
 
 
@@ -238,7 +238,7 @@ class CommandExecuteHandler(adsk.core.CommandEventHandler):
             chaosValue = 5
 
         # call the method to create the tree
-        createDonuts(treeThickness, treeHeight,
+        createTree(treeThickness, treeHeight,
                       pointForTreestart, branchingAngle, recursionDepthValue, chaosValue)
 
 
@@ -288,10 +288,10 @@ class CommandInputChangedHandler(adsk.core.InputChangedEventHandler):
 # branchinAngle how wide the branching will open
 # recursionDepthValue how many layers of recursion will be called
 # chaosValue how value will increase the randomness 
-def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, recursionDepthValue, chaosValue):
+def createTree(treeThickness, treeHeight, pointForTreestart, branchingAngle, recursionDepthValue, chaosValue):
     app = adsk.core.Application.get()
     ui = app.userInterface
-    #ui.messageBox('in createDonuts')
+
 
     try:
         # get the design  
@@ -388,6 +388,7 @@ def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, r
         # and color the body with this new material
         trunkBody.appearance = newAppear
 
+        #now create the base so the tree can spread out to the base
         # add a sketch for the base for the trunk
         trunkBaseSketch = sketches.add(xyPlane)
 
@@ -396,7 +397,7 @@ def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, r
 
         # circle on sketch
         trunkBase = trunkBaseCircles.addByCenterRadius(
-            pointForTreestart, 2*treeThickness)
+            pointForTreestart, 1.6*treeThickness)
 
         # get profile
         trunkBaseProf = trunkBaseSketch.profiles.item(0)
@@ -406,7 +407,7 @@ def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, r
             trunkBaseProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
         # extrude the cirlce by a small length
-        trunkBaseDist = adsk.core.ValueInput.createByReal(treeThickness/10)
+        trunkBaseDist = adsk.core.ValueInput.createByReal(treeThickness/100)
         trunkBaseExtInput.setOneSideExtent(adsk.fusion.DistanceExtentDefinition.create(
             trunkBaseDist), adsk.fusion.ExtentDirections.NegativeExtentDirection)
         trunkBaseExtInput.isSolid = True
@@ -493,9 +494,22 @@ def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, r
             #add the leaves with a different size, suitable to 0 recursion trees
             addLeaves(face, treeThickness*4.5, yellowAppear, progressDialog, chaosValue)
         else:
+
+            #add a collection of branches that will be added to the trunk in the end
+            BranchBodies = adsk.core.ObjectCollection.create()
+
+
             #for all other trees, pass the required values to the callSplit which will start the recursion
             callSplit(face, treeThickness,
-                      recursionDepthValue, newAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                      recursionDepthValue, newAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
+
+            #actually add all branches to the trunk body, usual routine, create input object, feature and add
+            BranchesCombineCutInput = rootComp.features.combineFeatures.createInput(
+                TargetBody, BranchBodies)
+            BranchesCombineCutFeats = rootComp.features.combineFeatures
+            BranchesCombineCutInput = BranchesCombineCutFeats.createInput(
+                TargetBody, BranchBodies)
+            BranchesCombineCutFeats.add(BranchesCombineCutInput)
 
         #reset the progresscounter after the tree is finished for the nex time a tree is created
         global progresscounter
@@ -521,7 +535,7 @@ def createDonuts(treeThickness, treeHeight, pointForTreestart, branchingAngle, r
 #branchingAngle, how far will the extrusion be rotated
 #progressDialog, the process dialog object, must be handed down to the addleaves, where the progress is updated
 #chaosValue setting for how much variation will be added to all the parameters
-def createBranch(face,  branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue):
+def createBranch(face,  branchWidth, axis, depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies):
     app = adsk.core.Application.get()
     ui = app.userInterface
 
@@ -630,10 +644,14 @@ def createBranch(face,  branchWidth, axis, depth, yellowAppear, branchFactor, br
             # color the created loft
             loftbody = loftbodies.bodies.item(0)
             loftbody.appearance = yellowAppear
+
+            #add the branch to the collection to combine later
+            BranchBodies.add(loftbody)
+            BranchBodies.add(branchbody)
             
             #once branch is created, callSplit is used to create further branchings on top 
             callSplit(topFace, branchWidth,
-                      depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                      depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
 
     except:
@@ -653,7 +671,7 @@ def createBranch(face,  branchWidth, axis, depth, yellowAppear, branchFactor, br
 #progressDialog, the process dialog object, must be handed down to the addleaves, where the progress is updated
 #chaosValue setting for how much variation will be added to all the parameters
 
-def callSplit(face, branchWidth, depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue):
+def callSplit(face, branchWidth, depth, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies):
     app = adsk.core.Application.get()
     ui = app.userInterface
 
@@ -683,68 +701,68 @@ def callSplit(face, branchWidth, depth, yellowAppear, branchFactor, branchingAng
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis = adsk.core.Vector3D.create(1.0, -0.577, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis = adsk.core.Vector3D.create(-1, -0.577, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
             if branchDecision == 4:
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(axis1, 0.0, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, axis1, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(0.0, -axis1, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis1 = random.uniform(0.7, 1.3)
                 axis = adsk.core.Vector3D.create(-axis1, 0.0, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
             if branchDecision == 5:
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis = adsk.core.Vector3D.create(0.0, 1.0, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis = adsk.core.Vector3D.create(1.0, 0.325, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis = adsk.core.Vector3D.create(-1, 0.325, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis = adsk.core.Vector3D.create(0.727, -1.0, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
                 thickFactor = 0.65 + random.uniform(-0.03*chaosValue, 0.03*chaosValue)
                 axis = adsk.core.Vector3D.create(-0.727, -1, 0.0)
                 createBranch(face, branchWidth *
-                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue)
+                                   thickFactor, axis, depth-1, yellowAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
 
     except:
         if ui:
