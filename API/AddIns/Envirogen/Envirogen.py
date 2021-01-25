@@ -26,6 +26,7 @@ def run(context):
                                                    'EnviroGen',
                                                    'Generate a different looking tree every time with the ease of a click',
                                                    './resources/Button')
+        buttonSample.toolClipFilename = './resources/sample.png'
 
         # Connect to the command created event.
         sampleCommandCreated = CommandCreatedEventHandler()
@@ -467,6 +468,25 @@ def createTree(treeThickness, treeHeight, pointForTreestart, branchingAngle, rec
         filletInput.addConstantRadiusEdgeSet(edges, filletSize, False)
         fillet = fillets.add(filletInput)
 
+
+    
+        #upscale TargetBody
+        
+        #basePt = sketch.sketchPoints.item(0)
+
+        basePt = sketch.sketchPoints.item(0)
+        scaleFactor = adsk.core.ValueInput.createByReal(1.0001)
+
+        #add a collection of branches that will be added to the trunk in the end
+        ScaleBodColl = adsk.core.ObjectCollection.create()
+        ScaleBodColl.add(TargetBody)
+        
+        scales = rootComp.features.scaleFeatures
+        scaleInput = scales.createInput(ScaleBodColl, basePt, scaleFactor)
+        scale = scales.add(scaleInput)
+
+
+
         #set to 0 so that it will be passed to callSplit 
         #where 0 means a random branching between 3 and 5 will be executed
         branchFactor = 0
@@ -502,26 +522,6 @@ def createTree(treeThickness, treeHeight, pointForTreestart, branchingAngle, rec
             #for all other trees, pass the required values to the callSplit which will start the recursion
             callSplit(face, treeThickness,
                       recursionDepthValue, newAppear, branchFactor, branchingAngle, progressDialog, chaosValue, BranchBodies)
-
-
-            #upscale all objects a tiny amount, because the combine feature sometimes wont recognize barely touching bodies 
-            # Create a scale input
-            #inputColl = adsk.core.ObjectCollection.create()
-            #inputColl.add(body)
-            
-            basePt = sketch.sketchPoints.item(0)
-            scaleFactor = adsk.core.ValueInput.createByReal(1.001)
-            
-            scales = rootComp.features.scaleFeatures
-            scaleInput = scales.createInput(BranchBodies, basePt, scaleFactor)
-            scale = scales.add(scaleInput)
-
-            trunkBodyColl = adsk.core.ObjectCollection.create()
-            trunkBodyColl.add(trunkBody)
-            scalesTrunk = rootComp.features.scaleFeatures
-            scaleInputTrunk = scalesTrunk.createInput(trunkBodyColl, basePt, scaleFactor)
-            scaleTrunk = scalesTrunk.add(scaleInputTrunk)
-        
 
 
             #actually add all branches to the trunk body, usual routine, create input object, feature and add
@@ -669,6 +669,34 @@ def createBranch(face,  branchWidth, axis, depth, yellowAppear, branchFactor, br
             # color the created loft
             loftbody = loftbodies.bodies.item(0)
             loftbody.appearance = yellowAppear
+
+
+            #upscale all objects a tiny amount, because the combine feature sometimes wont recognize barely touching bodies 
+            # Create a scale input
+
+            #upscale loftbody
+            inputColl = adsk.core.ObjectCollection.create()
+            inputColl.add(loftbody)
+            
+            #basePt = sketch.sketchPoints.item(0)
+            basePt = loftbody.vertices.item(0)
+            scaleFactor = adsk.core.ValueInput.createByReal(1.0001)
+            
+            scales = rootComp.features.scaleFeatures
+            scaleInput = scales.createInput(inputColl, basePt, scaleFactor)
+            scale = scales.add(scaleInput)
+
+            #upscale branchbody
+            inputColl = adsk.core.ObjectCollection.create()
+            inputColl.add(branchbody)
+
+            basePt = branchbody.vertices.item(0)
+            scaleFactor = adsk.core.ValueInput.createByReal(1.0001)
+            
+            scales = rootComp.features.scaleFeatures
+            scaleInput = scales.createInput(inputColl, basePt, scaleFactor)
+            scale = scales.add(scaleInput)
+
 
             #add the branch to the collection to combine later
             BranchBodies.add(loftbody)
