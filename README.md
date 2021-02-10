@@ -4,7 +4,7 @@
 
 ## Envirogen (Tree Generator)
 
-![alt text](https://github.com/hasanimran96/TreeGenerator/heroshot.png)
+<img src=https://github.com/hasanimran96/TreeGenerator/blob/master/heroshot.png/>
 
 ### Project Pitch
 
